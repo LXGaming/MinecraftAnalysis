@@ -1,0 +1,9 @@
+include "client"
+include "server"
+
+[
+    "client",
+    "server"
+].each {
+    findProject(":$it")?.name = "minecraftanalysis-$it"
+}
