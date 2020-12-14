@@ -1,9 +1,9 @@
-include "client"
-include "server"
+include "cli"
+include "common"
 
 [
-    "client",
-    "server"
+    "cli",
+    "common"
 ].each {
     findProject(":$it")?.name = "minecraftanalysis-$it"
 }
