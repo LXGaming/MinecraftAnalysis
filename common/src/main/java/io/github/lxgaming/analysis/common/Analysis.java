@@ -17,27 +17,18 @@
 package io.github.lxgaming.analysis.common;
 
 import io.github.lxgaming.analysis.common.configuration.Config;
-import io.github.lxgaming.analysis.common.configuration.ReconstructConfig;
 import io.github.lxgaming.analysis.common.entity.BuildManifest;
-import io.github.lxgaming.analysis.common.entity.minecraft.Artifact;
-import io.github.lxgaming.analysis.common.entity.minecraft.Version;
-import io.github.lxgaming.analysis.common.entity.minecraft.VersionList;
-import io.github.lxgaming.analysis.common.entity.minecraft.VersionManifest;
+import io.github.lxgaming.analysis.common.integration.minecraft.MinecraftIntegration;
+import io.github.lxgaming.analysis.common.integration.reconstruct.ReconstructIntegration;
+import io.github.lxgaming.analysis.common.manager.IntegrationManager;
 import io.github.lxgaming.analysis.common.manager.QueryManager;
-import io.github.lxgaming.analysis.common.util.HashUtils;
 import io.github.lxgaming.analysis.common.util.StringUtils;
 import io.github.lxgaming.analysis.common.util.Toolbox;
-import io.github.lxgaming.analysis.common.util.WebUtils;
 import io.github.lxgaming.classloader.ClassLoaderUtils;
-import io.github.lxgaming.reconstruct.common.Reconstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Writer;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +46,6 @@ public class Analysis {
     private static Analysis instance;
     private final Logger logger;
     private final Config config;
-    private final ReconstructConfig reconstructConfig;
     private Path analysisPath;
     private Path versionPath;
     private BuildManifest manifest;
@@ -64,7 +54,6 @@ public class Analysis {
         instance = this;
         this.logger = LoggerFactory.getLogger(Analysis.NAME);
         this.config = config;
-        this.reconstructConfig = new ReconstructConfig();
     }
     
     public void load() {
@@ -80,14 +69,23 @@ public class Analysis {
                 .resolve("versions")
                 .resolve(getConfig().getVersion());
         
+        IntegrationManager.prepare();
         QueryManager.prepare();
         
-        if (!downloadMinecraft()) {
+        IntegrationManager.execute();
+        
+        MinecraftIntegration minecraftIntegration = IntegrationManager.getIntegration(MinecraftIntegration.class);
+        ReconstructIntegration reconstructIntegration = IntegrationManager.getIntegration(ReconstructIntegration.class);
+        if (minecraftIntegration == null || reconstructIntegration == null) {
+            return;
+        }
+        
+        if (!minecraftIntegration.downloadMinecraft()) {
             return;
         }
         
         if (getConfig().isReconstruct()) {
-            if (!reconstructMinecraft()) {
+            if (!reconstructIntegration.performReconstruction()) {
                 return;
             }
         } else {
@@ -95,13 +93,13 @@ public class Analysis {
         }
         
         try {
-            ClassLoaderUtils.appendToClassPath(getReconstructConfig().getOutputPath().toUri().toURL());
+            ClassLoaderUtils.appendToClassPath(reconstructIntegration.getConfig().getOutputPath().toUri().toURL());
         } catch (Throwable ex) {
             getLogger().error("Encountered an error while attempting to append to the class path", ex);
             return;
         }
         
-        manifest = deserializeMinecraftManifest();
+        this.manifest = minecraftIntegration.deserializeBuildManifest();
         if (manifest == null) {
             return;
         }
@@ -118,128 +116,6 @@ public class Analysis {
         
         write("version", manifest);
         QueryManager.execute();
-    }
-    
-    private boolean downloadMinecraft() {
-        VersionList versionList;
-        try {
-            versionList = WebUtils.deserializeJson(new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json"), VersionList.class);
-        } catch (Exception ex) {
-            getLogger().error("Encountered an error while getting VersionList", ex);
-            return false;
-        }
-        
-        Version version = versionList.getVersion(getConfig().getVersion());
-        if (version == null) {
-            getLogger().error("Cannot find specified version {}", getConfig().getVersion());
-            return false;
-        }
-        
-        Analysis.getInstance().getLogger().info("Minecraft v{} ({})", version.getId(), version.getType());
-        
-        VersionManifest versionManifest;
-        try {
-            versionManifest = WebUtils.deserializeJson(new URL(version.getUrl()), VersionManifest.class);
-        } catch (Exception ex) {
-            getLogger().error("Encountered an error while getting VersionManifest", ex);
-            return false;
-        }
-        
-        Artifact serverArtifact = versionManifest.getDownloads().get("server");
-        if (serverArtifact == null) {
-            Analysis.getInstance().getLogger().error("Missing Server Artifact");
-            return false;
-        }
-        
-        Artifact serverMappingsArtifact = versionManifest.getDownloads().get("server_mappings");
-        if (serverMappingsArtifact == null) {
-            Analysis.getInstance().getLogger().error("Missing Server Mappings Artifact");
-            return false;
-        }
-        
-        Path jarPath = getVersionPath().resolve("server.jar");
-        Path mappingPath = getVersionPath().resolve("server.txt");
-        Path outputPath = getVersionPath().resolve("server-deobf.jar");
-        
-        getReconstructConfig().setJarPath(jarPath);
-        getReconstructConfig().setMappingPath(mappingPath);
-        getReconstructConfig().setOutputPath(outputPath);
-        getReconstructConfig().getExcludedPackages().add("com.google.");
-        getReconstructConfig().getExcludedPackages().add("com.mojang.");
-        getReconstructConfig().getExcludedPackages().add("io.netty.");
-        getReconstructConfig().getExcludedPackages().add("it.unimi.dsi.fastutil.");
-        getReconstructConfig().getExcludedPackages().add("javax.");
-        getReconstructConfig().getExcludedPackages().add("joptsimple.");
-        getReconstructConfig().getExcludedPackages().add("org.apache.");
-        
-        try {
-            if (Files.exists(jarPath) && Files.size(jarPath) == serverArtifact.getSize() && HashUtils.sha1(jarPath, serverArtifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified Server");
-            } else {
-                Analysis.getInstance().getLogger().debug("Downloading {}", serverArtifact.getUrl());
-                WebUtils.downloadFile(
-                        new URL(serverArtifact.getUrl()),
-                        jarPath,
-                        serverArtifact.getSize(),
-                        serverArtifact.getHash());
-                
-                Analysis.getInstance().getLogger().info("Downloaded Server");
-                getConfig().setReconstruct(true);
-            }
-        } catch (Exception ex) {
-            getLogger().error("Encountered an error while downloading {}", serverArtifact.getUrl(), ex);
-            return false;
-        }
-        
-        try {
-            if (Files.exists(mappingPath) && Files.size(mappingPath) == serverMappingsArtifact.getSize() && HashUtils.sha1(mappingPath, serverMappingsArtifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified Server Mappings");
-            } else {
-                Analysis.getInstance().getLogger().debug("Downloading {}", serverMappingsArtifact.getUrl());
-                WebUtils.downloadFile(
-                        new URL(serverMappingsArtifact.getUrl()),
-                        mappingPath,
-                        serverMappingsArtifact.getSize(),
-                        serverMappingsArtifact.getHash());
-                
-                Analysis.getInstance().getLogger().info("Downloaded Server Mappings");
-                getConfig().setReconstruct(true);
-            }
-        } catch (Exception ex) {
-            getLogger().error("Encountered an error while downloading {}", serverMappingsArtifact.getUrl(), ex);
-            return false;
-        }
-        
-        return true;
-    }
-    
-    private BuildManifest deserializeMinecraftManifest() {
-        try (InputStream inputStream = getClass().getResourceAsStream("/version.json")) {
-            if (inputStream == null) {
-                getLogger().error("version.json does not exist");
-                return null;
-            }
-            
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                return Toolbox.GSON.fromJson(reader, BuildManifest.class);
-            }
-        } catch (Exception ex) {
-            getLogger().error("Encountered an error while reading version.json", ex);
-            return null;
-        }
-    }
-    
-    private boolean reconstructMinecraft() {
-        try {
-            Reconstruct reconstruct = new Reconstruct(getReconstructConfig());
-            reconstruct.load();
-            return true;
-        } catch (Exception ex) {
-            getLogger().error("Encountered an error while reconstructing", ex);
-            return false;
-        } finally {
-            Reconstruct.getInstance().shutdown();
-        }
     }
     
     public void write(String name, Object object) {
@@ -270,10 +146,6 @@ public class Analysis {
     
     public Config getConfig() {
         return config;
-    }
-    
-    public ReconstructConfig getReconstructConfig() {
-        return reconstructConfig;
     }
     
     public Path getAnalysisPath() {

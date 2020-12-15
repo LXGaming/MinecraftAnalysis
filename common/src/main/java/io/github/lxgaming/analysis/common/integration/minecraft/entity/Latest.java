@@ -14,44 +14,23 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity.minecraft;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Version {
+public class Latest {
     
-    @SerializedName("id")
-    private String id;
+    @SerializedName("release")
+    private String release;
     
-    @SerializedName("type")
-    private String type;
+    @SerializedName("snapshot")
+    private String snapshot;
     
-    @SerializedName("url")
-    private String url;
-    
-    @SerializedName("time")
-    private String time;
-    
-    @SerializedName("releaseTime")
-    private String releaseTime;
-    
-    public String getId() {
-        return id;
+    public String getRelease() {
+        return release;
     }
     
-    public String getType() {
-        return type;
-    }
-    
-    public String getUrl() {
-        return url;
-    }
-    
-    public String getTime() {
-        return time;
-    }
-    
-    public String getReleaseTime() {
-        return releaseTime;
+    public String getSnapshot() {
+        return snapshot;
     }
 }

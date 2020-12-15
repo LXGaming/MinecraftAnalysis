@@ -17,6 +17,7 @@
 package io.github.lxgaming.analysis.cli.util;
 
 import io.github.lxgaming.analysis.common.Analysis;
+import io.github.lxgaming.analysis.common.manager.IntegrationManager;
 import org.apache.logging.log4j.LogManager;
 
 public class ShutdownHook extends Thread {
@@ -25,6 +26,8 @@ public class ShutdownHook extends Thread {
     public void run() {
         Thread.currentThread().setName("Shutdown Thread");
         Analysis.getInstance().getLogger().info("Shutting down...");
+        
+        IntegrationManager.shutdown();
         
         LogManager.shutdown();
     }

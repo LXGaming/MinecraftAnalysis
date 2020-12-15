@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity.minecraft;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
 import com.google.gson.annotations.SerializedName;
 

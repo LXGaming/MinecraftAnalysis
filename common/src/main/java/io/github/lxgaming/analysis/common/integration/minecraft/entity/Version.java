@@ -14,51 +14,44 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity.minecraft;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Artifact {
+public class Version {
     
     @SerializedName("id")
     private String id;
     
-    @SerializedName("path")
-    private String path;
-    
-    @SerializedName("sha1")
-    private String hash;
-    
-    @SerializedName("size")
-    private long size;
-    
-    @SerializedName("totalSize")
-    private long totalSize;
+    @SerializedName("type")
+    private String type;
     
     @SerializedName("url")
     private String url;
+    
+    @SerializedName("time")
+    private String time;
+    
+    @SerializedName("releaseTime")
+    private String releaseTime;
     
     public String getId() {
         return id;
     }
     
-    public String getPath() {
-        return path;
-    }
-    
-    public String getHash() {
-        return hash;
-    }
-    
-    public long getSize() {
-        return size;
-    }
-    
-    public long getTotalSize() {
-        return totalSize;
+    public String getType() {
+        return type;
     }
     
     public String getUrl() {
         return url;
+    }
+    
+    public String getTime() {
+        return time;
+    }
+    
+    public String getReleaseTime() {
+        return releaseTime;
     }
 }

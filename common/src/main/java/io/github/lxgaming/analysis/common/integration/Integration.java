@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity.minecraft;
+package io.github.lxgaming.analysis.common.integration;
 
-import com.google.gson.annotations.SerializedName;
-
-public class Latest {
+public abstract class Integration {
     
-    @SerializedName("release")
-    private String release;
+    public abstract boolean prepare();
     
-    @SerializedName("snapshot")
-    private String snapshot;
+    public abstract void execute() throws Exception;
     
-    public String getRelease() {
-        return release;
-    }
-    
-    public String getSnapshot() {
-        return snapshot;
-    }
+    public abstract void shutdown();
 }
