@@ -8,8 +8,16 @@ subprojects {
     repositories {
         jcenter()
         maven {
+            name = "fabricmc"
+            url = "https://maven.fabricmc.net/"
+        }
+        maven {
             name = "lxgaming"
             url = "https://dl.bintray.com/lxgaming/maven"
+        }
+        maven {
+            name = "minecraftforge"
+            url = "https://files.minecraftforge.net/maven"
         }
     }
 }

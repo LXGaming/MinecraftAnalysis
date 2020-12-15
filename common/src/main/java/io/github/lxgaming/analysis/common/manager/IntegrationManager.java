@@ -18,7 +18,9 @@ package io.github.lxgaming.analysis.common.manager;
 
 import io.github.lxgaming.analysis.common.Analysis;
 import io.github.lxgaming.analysis.common.integration.Integration;
+import io.github.lxgaming.analysis.common.integration.minecraft.MCPIntegration;
 import io.github.lxgaming.analysis.common.integration.minecraft.MinecraftIntegration;
+import io.github.lxgaming.analysis.common.integration.minecraft.YarnIntegration;
 import io.github.lxgaming.analysis.common.integration.reconstruct.ReconstructIntegration;
 import io.github.lxgaming.analysis.common.util.Toolbox;
 
@@ -32,7 +34,12 @@ public final class IntegrationManager {
     private static final Set<Class<? extends Integration>> INTEGRATION_CLASSES = new HashSet<>();
     
     public static void prepare() {
+        // Minecraft
+        registerIntegration(MCPIntegration.class);
         registerIntegration(MinecraftIntegration.class);
+        registerIntegration(YarnIntegration.class);
+        
+        // Reconstruct
         registerIntegration(ReconstructIntegration.class);
     }
     

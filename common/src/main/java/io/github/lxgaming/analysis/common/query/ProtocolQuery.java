@@ -19,7 +19,6 @@ package io.github.lxgaming.analysis.common.query;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.lxgaming.analysis.common.Analysis;
-import io.github.lxgaming.analysis.common.util.Toolbox;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -75,7 +74,7 @@ public class ProtocolQuery extends Query {
                 for (Map.Entry<Class<?>, Integer> classEntry : classToId.entrySet()) {
                     JsonObject jsonObject = new JsonObject();
                     jsonObject.addProperty("id", classEntry.getValue());
-                    jsonObject.addProperty("name", Toolbox.getClassSimpleName(classEntry.getKey()));
+                    jsonObject.addProperty("name", classEntry.getKey().getName());
                     jsonObject.addProperty("direction", flowEntry.getKey().toString());
                     jsonObject.addProperty("state", connectionProtocol.toString());
                     jsonArray.add(jsonObject);
@@ -110,7 +109,7 @@ public class ProtocolQuery extends Query {
                 for (Map.Entry<Integer, Class<?>> entry : packetEntry.getValue().entrySet()) {
                     JsonObject jsonObject = new JsonObject();
                     jsonObject.addProperty("id", entry.getKey());
-                    jsonObject.addProperty("name", Toolbox.getClassSimpleName(entry.getValue()));
+                    jsonObject.addProperty("name", entry.getValue().getName());
                     jsonObject.addProperty("direction", packetEntry.getKey().toString());
                     jsonObject.addProperty("state", connectionProtocol.toString());
                     jsonArray.add(jsonObject);
