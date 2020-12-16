@@ -126,6 +126,10 @@ public class ReconstructIntegration extends Integration {
                 yarnClass = null;
             }
             
+            if (mcpClass == null && yarnClass == null) {
+                continue;
+            }
+            
             for (RcField rcField : rcClass.getFields()) {
                 String obfuscatedFieldName = rcField.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
                 if (obfuscatedFieldName == null || obfuscatedFieldName.equals(rcField.getName())) {
