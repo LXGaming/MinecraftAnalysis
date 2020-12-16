@@ -69,9 +69,8 @@ public class ReconstructIntegration extends Integration {
             Reconstruct reconstruct = new Reconstruct(config);
             reconstruct.load();
             
-            applyMCPMapping();
-            applyYarnMapping();
-            writeMapping();
+            applyMappings();
+            writeMappings();
             return true;
         } catch (Exception ex) {
             Analysis.getInstance().getLogger().error("Encountered an error during reconstruction", ex);
@@ -81,131 +80,113 @@ public class ReconstructIntegration extends Integration {
         }
     }
     
-    private void applyMCPMapping() {
-        MCPIntegration integration = IntegrationManager.getIntegration(MCPIntegration.class);
-        if (integration == null) {
-            return;
-        }
+    private void applyMappings() {
+        MCPIntegration mcpIntegration = IntegrationManager.getIntegration(MCPIntegration.class);
+        YarnIntegration yarnIntegration = IntegrationManager.getIntegration(YarnIntegration.class);
         
         for (RcClass rcClass : Reconstruct.getInstance().getClasses()) {
             if (rcClass instanceof RcArray) {
                 continue;
             }
             
-            String className = rcClass.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
-            if (className == null || className.equals(rcClass.getName())) {
+            String obfuscatedClassName = rcClass.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
+            if (obfuscatedClassName == null || obfuscatedClassName.equals(rcClass.getName())) {
                 continue;
             }
             
-            IMappingFile.IClass mappingClass = integration.getMappingFile().getClass(className);
-            if (mappingClass == null) {
-                Analysis.getInstance().getLogger().warn("Unknown Class: {}", rcClass.getName());
-                continue;
+            IMappingFile.IClass mcpClass;
+            if (mcpIntegration != null && mcpIntegration.getMappingFile() != null) {
+                mcpClass = mcpIntegration.getMappingFile().getClass(obfuscatedClassName);
+                if (mcpClass != null) {
+                    String mcpClassName = Toolbox.toJvmName(mcpClass.getMapped());
+                    rcClass.setAttribute(MCP_NAME, mcpClassName);
+                    Analysis.getInstance().getLogger().debug("MCP Class: {} -> {}", rcClass.getName(), mcpClassName);
+                } else {
+                    Analysis.getInstance().getLogger().warn("Unknown MCP Class: {}", rcClass.getName());
+                }
+            } else {
+                mcpClass = null;
             }
             
-            rcClass.setAttribute(MCP_NAME, Toolbox.toJvmName(mappingClass.getMapped()));
-            Analysis.getInstance().getLogger().debug("MCP Class: {} -> {}", rcClass.getName(), Toolbox.toJvmName(mappingClass.getMapped()));
+            ClassDef yarnClass;
+            if (yarnIntegration != null && yarnIntegration.getTinyTree() != null) {
+                yarnClass = yarnIntegration.getTinyTree().getDefaultNamespaceClassMap().get(obfuscatedClassName);
+                if (yarnClass != null) {
+                    String yarnClassName = Toolbox.toJvmName(yarnClass.getName("intermediary"));
+                    rcClass.setAttribute(YARN_NAME, yarnClassName);
+                    Analysis.getInstance().getLogger().debug("Yarn Class: {} -> {}", rcClass.getName(), yarnClassName);
+                } else {
+                    Analysis.getInstance().getLogger().warn("Unknown Yarn Class: {}", rcClass.getName());
+                }
+            } else {
+                yarnClass = null;
+            }
             
             for (RcField rcField : rcClass.getFields()) {
-                String fieldName = rcField.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
-                if (fieldName == null || fieldName.equals(rcField.getName())) {
+                String obfuscatedFieldName = rcField.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
+                if (obfuscatedFieldName == null || obfuscatedFieldName.equals(rcField.getName())) {
                     continue;
                 }
                 
-                String name = mappingClass.remapField(fieldName);
-                if (name == null || name.equals(fieldName)) {
-                    Analysis.getInstance().getLogger().warn("Unknown Field: {} ({})", fieldName, rcField.getName());
-                    continue;
+                if (mcpClass != null) {
+                    String mcpFieldName = mcpClass.remapField(obfuscatedFieldName);
+                    if (mcpFieldName != null && !mcpFieldName.equals(obfuscatedFieldName)) {
+                        rcField.setAttribute(MCP_NAME, mcpFieldName);
+                        Analysis.getInstance().getLogger().debug("MCP Field: {} -> {}", rcField.getName(), mcpFieldName);
+                    } else {
+                        Analysis.getInstance().getLogger().warn("Unknown MCP Field: {}", rcField.getName());
+                    }
                 }
                 
-                rcField.setAttribute(MCP_NAME, name);
-                Analysis.getInstance().getLogger().debug("MCP Field: {} -> {}", rcField.getName(), name);
+                if (yarnClass != null) {
+                    String yarnFieldName = yarnIntegration.getField(yarnClass, obfuscatedFieldName);
+                    if (yarnFieldName != null && !yarnFieldName.equals(obfuscatedFieldName)) {
+                        rcField.setAttribute(YARN_NAME, yarnFieldName);
+                        Analysis.getInstance().getLogger().debug("Yarn Field: {} -> {}", rcField.getName(), yarnFieldName);
+                    } else {
+                        Analysis.getInstance().getLogger().warn("Unknown Yarn Field: {}", rcField.getName());
+                    }
+                }
             }
             
             for (RcMethod rcMethod : rcClass.getMethods()) {
-                String descriptor = rcMethod.getAttribute(Attributes.OBFUSCATED_DESCRIPTOR).orElse(null);
-                if (descriptor == null || descriptor.equals(rcMethod.getDescriptor())) {
+                String obfuscatedMethodDescriptor = rcMethod.getAttribute(Attributes.OBFUSCATED_DESCRIPTOR).orElse(null);
+                if (obfuscatedMethodDescriptor == null || obfuscatedMethodDescriptor.equals(rcMethod.getDescriptor())) {
                     continue;
                 }
                 
-                int index = descriptor.indexOf('(');
-                String methodName = descriptor.substring(0, index);
-                String methodDesc = descriptor.substring(index);
-                String name = mappingClass.remapMethod(methodName, methodDesc);
-                if (name == null || name.equals(methodName)) {
-                    Analysis.getInstance().getLogger().warn("Unknown Method: {} ({})", descriptor, rcMethod.getName());
+                int index = obfuscatedMethodDescriptor.indexOf('(');
+                if (index == -1) {
                     continue;
                 }
                 
-                rcMethod.setAttribute(MCP_NAME, name);
-                Analysis.getInstance().getLogger().debug("MCP Method: {} -> {}", rcMethod.getName(), name);
+                String obfuscatedMethodName = obfuscatedMethodDescriptor.substring(0, index);
+                String obfuscatedMethodDesc = obfuscatedMethodDescriptor.substring(index);
+                
+                if (mcpClass != null) {
+                    String mcpMethodName = mcpClass.remapMethod(obfuscatedMethodName, obfuscatedMethodDesc);
+                    if (mcpMethodName != null && !mcpMethodName.equals(obfuscatedMethodName)) {
+                        rcMethod.setAttribute(MCP_NAME, mcpMethodName);
+                        Analysis.getInstance().getLogger().debug("MCP Method: {} -> {}", rcMethod.getName(), mcpMethodName);
+                    } else {
+                        Analysis.getInstance().getLogger().warn("Unknown MCP Method: {}", rcMethod.getName());
+                    }
+                }
+                
+                if (yarnClass != null) {
+                    String yarnMethodName = yarnIntegration.getMethod(yarnClass, obfuscatedMethodName, obfuscatedMethodDesc);
+                    if (yarnMethodName != null && !yarnMethodName.equals(obfuscatedMethodName)) {
+                        rcMethod.setAttribute(YARN_NAME, yarnMethodName);
+                        Analysis.getInstance().getLogger().debug("Yarn Method: {} -> {}", rcMethod.getName(), yarnMethodName);
+                    } else {
+                        Analysis.getInstance().getLogger().warn("Unknown Yarn Method: {}", rcMethod.getName());
+                    }
+                }
             }
         }
     }
     
-    private void applyYarnMapping() {
-        YarnIntegration integration = IntegrationManager.getIntegration(YarnIntegration.class);
-        if (integration == null) {
-            return;
-        }
-        
-        for (RcClass rcClass : Reconstruct.getInstance().getClasses()) {
-            if (rcClass instanceof RcArray) {
-                continue;
-            }
-            
-            String className = rcClass.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
-            if (className == null || className.equals(rcClass.getName())) {
-                continue;
-            }
-            
-            ClassDef mappingClass = integration.getTinyTree().getDefaultNamespaceClassMap().get(className);
-            if (mappingClass == null) {
-                Analysis.getInstance().getLogger().warn("Unknown Class: {}", rcClass.getName());
-                continue;
-            }
-            
-            rcClass.setAttribute(YARN_NAME, Toolbox.toJvmName(mappingClass.getName("intermediary")));
-            Analysis.getInstance().getLogger().debug("Yarn Class: {} -> {}", rcClass.getName(), Toolbox.toJvmName(mappingClass.getName("intermediary")));
-            
-            for (RcField rcField : rcClass.getFields()) {
-                String fieldName = rcField.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
-                if (fieldName == null || fieldName.equals(rcField.getName())) {
-                    continue;
-                }
-                
-                String name = integration.getField(mappingClass, fieldName);
-                if (name == null || name.equals(fieldName)) {
-                    Analysis.getInstance().getLogger().warn("Unknown Field: {} ({})", fieldName, rcField.getName());
-                    continue;
-                }
-                
-                rcField.setAttribute(YARN_NAME, name);
-                Analysis.getInstance().getLogger().debug("Yarn Field: {} -> {}", rcField.getName(), name);
-            }
-            
-            for (RcMethod rcMethod : rcClass.getMethods()) {
-                String descriptor = rcMethod.getAttribute(Attributes.OBFUSCATED_DESCRIPTOR).orElse(null);
-                if (descriptor == null || descriptor.equals(rcMethod.getDescriptor())) {
-                    continue;
-                }
-                
-                int index = descriptor.indexOf('(');
-                String methodName = descriptor.substring(0, index);
-                String methodDesc = descriptor.substring(index);
-                String name = integration.getMethod(mappingClass, methodName, methodDesc);
-                if (name == null || name.equals(methodName)) {
-                    Analysis.getInstance().getLogger().warn("Unknown Method: {} ({})", descriptor, rcMethod.getName());
-                    continue;
-                }
-                
-                rcMethod.setAttribute(YARN_NAME, name);
-                Analysis.getInstance().getLogger().debug("Yarn Method: {} -> {}", rcMethod.getName(), name);
-            }
-        }
-    }
-    
-    private void writeMapping() {
+    private void writeMappings() {
         JsonArray mapping = new JsonArray();
         for (RcClass rcClass : Reconstruct.getInstance().getClasses()) {
             if (rcClass instanceof RcArray) {

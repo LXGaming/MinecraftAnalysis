@@ -111,10 +111,9 @@ public class Analysis {
         getLogger().info("-- Pack: {}", getManifest().getPackVersion());
         getLogger().info("-- Protocol: {}", getManifest().getProtocolVersion());
         getLogger().info("-- World: {}", getManifest().getWorldVersion());
+        write("version", manifest);
         
         getLogger().info("Performing Analysis...");
-        
-        write("version", manifest);
         QueryManager.execute();
     }
     
