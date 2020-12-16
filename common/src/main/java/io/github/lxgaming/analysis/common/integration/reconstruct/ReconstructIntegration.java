@@ -94,6 +94,10 @@ public class ReconstructIntegration extends Integration {
                 continue;
             }
             
+            if (rcClass.getName().endsWith(".package-info")) {
+                continue;
+            }
+            
             IMappingFile.IClass mcpClass;
             if (mcpIntegration != null && mcpIntegration.getMappingFile() != null) {
                 mcpClass = mcpIntegration.getMappingFile().getClass(obfuscatedClassName);
