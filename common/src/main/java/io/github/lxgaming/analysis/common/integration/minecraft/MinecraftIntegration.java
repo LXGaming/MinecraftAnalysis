@@ -112,6 +112,10 @@ public class MinecraftIntegration extends Integration {
         Path mappingPath = versionPath.resolve("server.txt");
         Path outputPath = versionPath.resolve("server-deobf.jar");
         
+        if (!Analysis.getInstance().getConfig().isReconstruct()) {
+            Analysis.getInstance().getConfig().setReconstruct(!Files.exists(outputPath));
+        }
+        
         ReconstructIntegration integration = IntegrationManager.getIntegration(ReconstructIntegration.class);
         if (integration != null) {
             integration.getConfig().setJarPath(jarPath);
