@@ -89,18 +89,18 @@ public class ReconstructIntegration extends Integration {
                 continue;
             }
             
-            String obfuscatedClassName = rcClass.getAttribute(Attributes.OBFUSCATED_NAME).orElse(null);
-            if (obfuscatedClassName == null || obfuscatedClassName.equals(rcClass.getName())) {
+            if (rcClass.getName().endsWith(".package-info")) {
                 continue;
             }
             
-            if (rcClass.getName().endsWith(".package-info")) {
+            String obfuscatedClassName = rcClass.getAttribute(Attributes.OBFUSCATED_NAME).orElse(rcClass.getName());
+            if (obfuscatedClassName.equals(rcClass.getName()) && !rcClass.getName().startsWith("net.minecraft.")) {
                 continue;
             }
             
             IMappingFile.IClass mcpClass;
             if (mcpIntegration != null && mcpIntegration.getMappingFile() != null) {
-                mcpClass = mcpIntegration.getMappingFile().getClass(obfuscatedClassName);
+                mcpClass = mcpIntegration.getMappingFile().getClass(Toolbox.toJvmName(obfuscatedClassName));
                 if (mcpClass != null) {
                     String mcpClassName = Toolbox.toJvmName(mcpClass.getMapped());
                     rcClass.setAttribute(MCP_NAME, mcpClassName);
@@ -114,7 +114,7 @@ public class ReconstructIntegration extends Integration {
             
             ClassDef yarnClass;
             if (yarnIntegration != null && yarnIntegration.getTinyTree() != null) {
-                yarnClass = yarnIntegration.getTinyTree().getDefaultNamespaceClassMap().get(obfuscatedClassName);
+                yarnClass = yarnIntegration.getTinyTree().getDefaultNamespaceClassMap().get(Toolbox.toJvmName(obfuscatedClassName));
                 if (yarnClass != null) {
                     String yarnClassName = Toolbox.toJvmName(yarnClass.getName("intermediary"));
                     rcClass.setAttribute(YARN_NAME, yarnClassName);
@@ -241,8 +241,8 @@ public class ReconstructIntegration extends Integration {
     }
     
     private JsonObject createMapping(Attributes attributes, String name) {
-        String obfuscatedName = attributes.getAttribute(Attributes.OBFUSCATED_NAME).map(Toolbox::toJavaName).orElse(null);
-        if (obfuscatedName == null || obfuscatedName.equals(name)) {
+        String obfuscatedName = attributes.getAttribute(Attributes.OBFUSCATED_NAME).orElse(name);
+        if (obfuscatedName.equals(name) && !name.startsWith("net.minecraft.")) {
             return null;
         }
         
