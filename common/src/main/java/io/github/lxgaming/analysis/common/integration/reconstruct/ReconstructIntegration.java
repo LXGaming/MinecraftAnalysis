@@ -201,6 +201,10 @@ public class ReconstructIntegration extends Integration {
                 continue;
             }
             
+            if (rcClass.getName().endsWith(".package-info")) {
+                continue;
+            }
+            
             JsonObject classMapping = createMapping(rcClass, rcClass.getName());
             if (classMapping == null) {
                 continue;
