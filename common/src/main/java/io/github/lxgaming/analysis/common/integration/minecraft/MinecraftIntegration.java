@@ -38,6 +38,7 @@ import java.nio.file.Path;
 
 public class MinecraftIntegration extends Integration {
     
+    private String type;
     private Version version;
     
     @Override
@@ -47,6 +48,12 @@ public class MinecraftIntegration extends Integration {
             versionList = WebUtils.deserializeJson(new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json"), VersionList.class);
         } catch (Exception ex) {
             Analysis.getInstance().getLogger().error("Encountered an error while getting VersionList", ex);
+            return false;
+        }
+        
+        this.type = Analysis.getInstance().getConfig().getType().toLowerCase();
+        if (!type.equals("client") && !type.equals("server")) {
+            Analysis.getInstance().getLogger().error("Specified type is unsupported {}", Analysis.getInstance().getConfig().getType());
             return false;
         }
         
@@ -95,22 +102,22 @@ public class MinecraftIntegration extends Integration {
             return false;
         }
         
-        Artifact serverArtifact = versionManifest.getDownloads().get("server");
-        if (serverArtifact == null) {
-            Analysis.getInstance().getLogger().error("Missing Server Artifact");
+        Artifact artifact = versionManifest.getDownloads().get(type);
+        if (artifact == null) {
+            Analysis.getInstance().getLogger().error("Missing {} Artifact", type);
             return false;
         }
         
-        Artifact serverMappingsArtifact = versionManifest.getDownloads().get("server_mappings");
-        if (serverMappingsArtifact == null) {
-            Analysis.getInstance().getLogger().error("Missing Server Mappings Artifact");
+        Artifact mappingsArtifact = versionManifest.getDownloads().get(type + "_mappings");
+        if (mappingsArtifact == null) {
+            Analysis.getInstance().getLogger().error("Missing {} Mappings Artifact", type);
             return false;
         }
         
         Path versionPath = Analysis.getInstance().getVersionPath();
-        Path jarPath = versionPath.resolve("server.jar");
-        Path mappingPath = versionPath.resolve("server.txt");
-        Path outputPath = versionPath.resolve("server-deobf.jar");
+        Path jarPath = versionPath.resolve(type + ".jar");
+        Path mappingPath = versionPath.resolve(type + ".txt");
+        Path outputPath = versionPath.resolve(type + "-deobf.jar");
         
         if (!Analysis.getInstance().getConfig().isReconstruct()) {
             Analysis.getInstance().getConfig().setReconstruct(!Files.exists(outputPath));
@@ -124,40 +131,40 @@ public class MinecraftIntegration extends Integration {
         }
         
         try {
-            if (Files.exists(jarPath) && Files.size(jarPath) == serverArtifact.getSize() && HashUtils.sha1(jarPath, serverArtifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified Server");
+            if (Files.exists(jarPath) && Files.size(jarPath) == artifact.getSize() && HashUtils.sha1(jarPath, artifact.getHash())) {
+                Analysis.getInstance().getLogger().info("Verified {}", type);
             } else {
-                Analysis.getInstance().getLogger().debug("Downloading {}", serverArtifact.getUrl());
+                Analysis.getInstance().getLogger().debug("Downloading {}", artifact.getUrl());
                 WebUtils.downloadFile(
-                        new URL(serverArtifact.getUrl()),
+                        new URL(artifact.getUrl()),
                         jarPath,
-                        serverArtifact.getSize(),
-                        serverArtifact.getHash());
+                        artifact.getSize(),
+                        artifact.getHash());
                 
-                Analysis.getInstance().getLogger().info("Downloaded Server");
+                Analysis.getInstance().getLogger().info("Downloaded {}", type);
                 Analysis.getInstance().getConfig().setReconstruct(true);
             }
         } catch (Exception ex) {
-            Analysis.getInstance().getLogger().error("Encountered an error while downloading {}", serverArtifact.getUrl(), ex);
+            Analysis.getInstance().getLogger().error("Encountered an error while downloading {}", artifact.getUrl(), ex);
             return false;
         }
         
         try {
-            if (Files.exists(mappingPath) && Files.size(mappingPath) == serverMappingsArtifact.getSize() && HashUtils.sha1(mappingPath, serverMappingsArtifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified Server Mappings");
+            if (Files.exists(mappingPath) && Files.size(mappingPath) == mappingsArtifact.getSize() && HashUtils.sha1(mappingPath, mappingsArtifact.getHash())) {
+                Analysis.getInstance().getLogger().info("Verified {} Mappings", type);
             } else {
-                Analysis.getInstance().getLogger().debug("Downloading {}", serverMappingsArtifact.getUrl());
+                Analysis.getInstance().getLogger().debug("Downloading {}", mappingsArtifact.getUrl());
                 WebUtils.downloadFile(
-                        new URL(serverMappingsArtifact.getUrl()),
+                        new URL(mappingsArtifact.getUrl()),
                         mappingPath,
-                        serverMappingsArtifact.getSize(),
-                        serverMappingsArtifact.getHash());
+                        mappingsArtifact.getSize(),
+                        mappingsArtifact.getHash());
                 
-                Analysis.getInstance().getLogger().info("Downloaded Server Mappings");
+                Analysis.getInstance().getLogger().info("Downloaded {} Mappings", type);
                 Analysis.getInstance().getConfig().setReconstruct(true);
             }
         } catch (Exception ex) {
-            Analysis.getInstance().getLogger().error("Encountered an error while downloading {}", serverMappingsArtifact.getUrl(), ex);
+            Analysis.getInstance().getLogger().error("Encountered an error while downloading {}", mappingsArtifact.getUrl(), ex);
             return false;
         }
         

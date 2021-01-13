@@ -35,6 +35,9 @@ public class ConfigImpl implements Config {
     @Parameter(names = {"-query", "--query", "-queries", "--queries"}, description = "Queries to use during analysis")
     private List<String> queries = null;
     
+    @Parameter(names = {"-type", "--type"}, description = "Client or Server")
+    private String type = "server";
+    
     @Parameter(names = {"-version", "--version"}, description = "Target Minecraft Version")
     private String version = null;
     
@@ -66,6 +69,11 @@ public class ConfigImpl implements Config {
     @Override
     public List<String> getQueries() {
         return queries;
+    }
+    
+    @Override
+    public String getType() {
+        return type;
     }
     
     @Override

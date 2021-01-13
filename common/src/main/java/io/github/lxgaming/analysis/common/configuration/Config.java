@@ -32,5 +32,7 @@ public interface Config {
     
     Collection<String> getQueries();
     
+    String getType();
+    
     String getVersion();
 }
