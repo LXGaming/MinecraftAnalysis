@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,6 +113,15 @@ public class Analysis {
         getLogger().info("-- Protocol: {}", getManifest().getProtocolVersion());
         getLogger().info("-- World: {}", getManifest().getWorldVersion());
         write("version", manifest);
+        
+        try {
+            Class<?> bootstrapClass = Class.forName("net.minecraft.server.Bootstrap");
+            Method method = bootstrapClass.getMethod("bootStrap");
+            method.invoke(null);
+        } catch (Throwable ex) {
+            getLogger().error("Encountered an error while attempting to bootstrap Minecraft", ex);
+            return;
+        }
         
         getLogger().info("Performing Analysis...");
         QueryManager.execute();
