@@ -17,6 +17,7 @@
 package io.github.lxgaming.analysis.common.manager;
 
 import io.github.lxgaming.analysis.common.Analysis;
+import io.github.lxgaming.analysis.common.query.PropertiesQuery;
 import io.github.lxgaming.analysis.common.query.ProtocolQuery;
 import io.github.lxgaming.analysis.common.query.Query;
 import io.github.lxgaming.analysis.common.util.StringUtils;
@@ -33,6 +34,7 @@ public final class QueryManager {
     private static final Set<Class<? extends Query>> QUERY_CLASSES = new HashSet<>();
     
     public static void prepare() {
+        registerQuery(PropertiesQuery.class);
         registerQuery(ProtocolQuery.class);
     }
     
