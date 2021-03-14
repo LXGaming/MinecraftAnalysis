@@ -36,17 +36,23 @@ public class PropertiesQuery extends Query {
     
     @Override
     public void execute() throws Exception {
-        Class<?> registryAccessClass = Class.forName("net.minecraft.core.RegistryAccess");
-        
-        // net.minecraft.core.RegistryAccess.builtin()
-        Method method = registryAccessClass.getMethod("builtin");
-        Object registryAccessInstance = method.invoke(null);
-        
         Class<?> dedicatedServerPropertiesClass = Class.forName("net.minecraft.server.dedicated.DedicatedServerProperties");
-        Constructor<?> dedicatedServerPropertiesConstructor = dedicatedServerPropertiesClass.getConstructor(Properties.class, registryAccessClass);
+        Constructor<?> dedicatedServerPropertiesConstructor = dedicatedServerPropertiesClass.getConstructors()[0];
         
         Properties properties = new PropertiesImpl();
-        Object dedicatedServerInstance = dedicatedServerPropertiesConstructor.newInstance(properties, registryAccessInstance);
+        if (dedicatedServerPropertiesConstructor.getParameterCount() == 1) {
+            dedicatedServerPropertiesConstructor.newInstance(properties);
+        } else if (dedicatedServerPropertiesConstructor.getParameterCount() == 2) {
+            Class<?> registryAccessClass = Class.forName("net.minecraft.core.RegistryAccess");
+            
+            // net.minecraft.core.RegistryAccess.builtin()
+            Method method = registryAccessClass.getMethod("builtin");
+            Object registryAccessInstance = method.invoke(null);
+            
+            dedicatedServerPropertiesConstructor.newInstance(properties, registryAccessInstance);
+        } else {
+            throw new UnsupportedOperationException(String.format("Unsupported Constructor for %s", dedicatedServerPropertiesClass.getName()));
+        }
         
         JsonObject settings = new JsonObject();
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
