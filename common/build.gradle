@@ -1,9 +1,9 @@
 plugins {
-    id "com.jfrog.bintray"
     id "java"
     id "java-library"
     id "maven-publish"
     id "net.kyori.blossom"
+    id "signing"
 }
 
 sourceCompatibility = 1.8
@@ -34,41 +34,9 @@ dependencies {
     testCompile("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    archiveClassifier.set("javadoc")
-    from javadoc.destinationDir
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    archiveClassifier.set("sources")
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives javadocJar
-    archives sourcesJar
-}
-
-bintray {
-    user = System.getenv("BINTRAY_USER")
-    key = System.getenv("BINTRAY_KEY")
-    publications = ["mavenPublication"]
-    pkg {
-        repo = "maven"
-        name = "MinecraftAnalysis"
-        licenses = ["Apache-2.0"]
-        vcsUrl = "https://github.com/LXGaming/MinecraftAnalysis.git"
-        publish = true
-        version {
-            name = project.version
-            released = new Date()
-        }
-    }
-}
-
-bintrayUpload {
-    onlyIf { System.getenv("BINTRAY_KEY") != null }
-    onlyIf { System.getenv("BINTRAY_USER") != null }
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 javadoc {
@@ -87,10 +55,50 @@ publishing {
             groupId group
             artifactId archivesBaseName
             version version
-            artifact javadocJar
-            artifact sourcesJar
+            pom {
+                name = "MinecraftAnalysis"
+                description = "Minecraft Analysis"
+                url = "https://github.com/LXGaming/MinecraftAnalysis"
+                developers {
+                    developer {
+                        id = "lxgaming"
+                        name = "LXGaming"
+                    }
+                }
+                issueManagement {
+                    system = "GitHub Issues"
+                    url = "https://github.com/LXGaming/MinecraftAnalysis/issues"
+                }
+                licenses {
+                    license {
+                        name = "The Apache License, Version 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+                scm {
+                    connection = "scm:git@github.com:LXGaming/MinecraftAnalysis.git"
+                    developerConnection = "scm:git@github.com:LXGaming/MinecraftAnalysis.git"
+                    url = "https://github.com/LXGaming/MinecraftAnalysis"
+                }
+            }
         }
     }
+    repositories {
+        if (project.hasProperty("sonatype.username") && project.hasProperty("sonatype.password")) {
+            maven {
+                name = "sonatype"
+                url = version.contains("-SNAPSHOT") ? "https://oss.sonatype.org/content/repositories/snapshots" : "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+                credentials {
+                    username project.property("sonatype.username")
+                    password project.property("sonatype.password")
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications
 }
 
 test {
