@@ -35,6 +35,10 @@ import io.github.lxgaming.reconstruct.common.util.Toolbox;
 import net.fabricmc.mapping.tree.ClassDef;
 import net.minecraftforge.srgutils.IMappingFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
 public class ReconstructIntegration extends Integration {
     
     private static final Attribute.Key<String> MCP_NAME = Attribute.Key.of("mcp_name", String.class);
@@ -66,8 +70,15 @@ public class ReconstructIntegration extends Integration {
     
     public boolean performReconstruction() {
         try {
+            Path outputPath = config.getOutputPath();
+            Path temporaryOutputPath = outputPath.resolveSibling(outputPath.getFileName().toString() + ".tmp");
+            config.setOutputPath(temporaryOutputPath);
+            
             Reconstruct reconstruct = new Reconstruct(config);
             reconstruct.load();
+            
+            config.setOutputPath(outputPath);
+            Files.move(temporaryOutputPath, outputPath, StandardCopyOption.REPLACE_EXISTING);
             
             applyMappings();
             writeMappings();
