@@ -41,7 +41,7 @@ public class Analysis {
     public static final String AUTHORS = "LX_Gaming";
     public static final String SOURCE = "https://github.com/LXGaming/MinecraftAnalysis";
     public static final String WEBSITE = "https://lxgaming.github.io/";
-    public static final String USER_AGENT = Analysis.NAME + "/" + Analysis.VERSION + "; (+" + Analysis.WEBSITE + ")";
+    public static final String USER_AGENT = Analysis.NAME + "/" + Analysis.VERSION + " (+" + Analysis.WEBSITE + ")";
     
     private static Analysis instance;
     private final Logger logger;
