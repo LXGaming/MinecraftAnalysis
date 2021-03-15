@@ -16,6 +16,8 @@
 
 package io.github.lxgaming.analysis.common.util;
 
+import com.google.gson.JsonNull;
+
 import java.util.Properties;
 
 public class PropertiesImpl extends Properties {
@@ -24,7 +26,7 @@ public class PropertiesImpl extends Properties {
     public synchronized Object get(Object key) {
         Object object = super.get(key);
         if (object == null) {
-            put(key, "");
+            put(key, JsonNull.INSTANCE);
         }
         
         return object;

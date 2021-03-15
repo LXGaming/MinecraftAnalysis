@@ -27,6 +27,7 @@ public class Toolbox {
     public static final Gson GSON = new GsonBuilder()
             .disableHtmlEscaping()
             .enableComplexMapKeySerialization()
+            .serializeNulls()
             .setPrettyPrinting()
             .create();
     

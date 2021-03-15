@@ -16,6 +16,7 @@
 
 package io.github.lxgaming.analysis.common.query;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import io.github.lxgaming.analysis.common.Analysis;
@@ -64,6 +65,8 @@ public class PropertiesQuery extends Query {
             
             if (value == null) {
                 setting.add("value", JsonNull.INSTANCE);
+            } else if (value instanceof JsonElement) {
+                setting.add("value", (JsonElement) value);
             } else if (value instanceof String) {
                 setting.addProperty("value", (String) value);
             } else if (value instanceof Number) {
