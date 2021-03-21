@@ -13,6 +13,7 @@
         </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
+        <Logger level="${sys:analysis.logging.netty.level:-info}" name="io.netty"/>
         <Root level="ALL">
             <AppenderRef ref="Console" level="${sys:analysis.logging.console.level:-info}"/>
             <AppenderRef ref="File" level="${sys:analysis.logging.file.level:-debug}"/>
