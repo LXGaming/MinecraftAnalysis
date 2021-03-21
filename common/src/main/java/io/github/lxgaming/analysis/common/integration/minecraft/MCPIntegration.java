@@ -18,6 +18,7 @@ package io.github.lxgaming.analysis.common.integration.minecraft;
 
 import io.github.lxgaming.analysis.common.Analysis;
 import io.github.lxgaming.analysis.common.integration.Integration;
+import io.github.lxgaming.analysis.common.manager.IntegrationManager;
 import io.github.lxgaming.analysis.common.util.WebUtils;
 import net.minecraftforge.srgutils.IMappingFile;
 
@@ -47,8 +48,12 @@ public class MCPIntegration extends Integration {
     
     @Override
     public void execute() throws Exception {
-        Path mappingPath = Analysis.getInstance().getVersionPath().resolve("mapping.tsrg");
+        MinecraftIntegration integration = IntegrationManager.getIntegration(MinecraftIntegration.class);
+        if (integration == null || integration.getVersion() == null || !integration.getVersion().getType().equals("release")) {
+            return;
+        }
         
+        Path mappingPath = Analysis.getInstance().getVersionPath().resolve("mapping.tsrg");
         if (!Files.exists(mappingPath)) {
             try {
                 Analysis.getInstance().getLogger().debug("Downloading {}", url);

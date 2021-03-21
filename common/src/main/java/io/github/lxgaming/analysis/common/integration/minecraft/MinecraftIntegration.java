@@ -166,4 +166,8 @@ public class MinecraftIntegration extends Integration {
         
         return true;
     }
+    
+    public Version getVersion() {
+        return version;
+    }
 }
