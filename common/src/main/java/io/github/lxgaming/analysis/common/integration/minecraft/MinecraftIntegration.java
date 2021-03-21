@@ -18,6 +18,7 @@ package io.github.lxgaming.analysis.common.integration.minecraft;
 
 import io.github.lxgaming.analysis.common.Analysis;
 import io.github.lxgaming.analysis.common.entity.BuildManifest;
+import io.github.lxgaming.analysis.common.entity.Platform;
 import io.github.lxgaming.analysis.common.integration.Integration;
 import io.github.lxgaming.analysis.common.integration.minecraft.entity.Artifact;
 import io.github.lxgaming.analysis.common.integration.minecraft.entity.Version;
@@ -38,7 +39,7 @@ import java.nio.file.Path;
 
 public class MinecraftIntegration extends Integration {
     
-    private String type;
+    private Platform platform;
     private Version version;
     
     @Override
@@ -51,12 +52,7 @@ public class MinecraftIntegration extends Integration {
             return false;
         }
         
-        this.type = Analysis.getInstance().getConfig().getType().toLowerCase();
-        if (!type.equals("client") && !type.equals("server")) {
-            Analysis.getInstance().getLogger().error("Specified type is unsupported {}", Analysis.getInstance().getConfig().getType());
-            return false;
-        }
-        
+        this.platform = Analysis.getInstance().getConfig().getPlatform();
         this.version = versionList.getVersion(Analysis.getInstance().getConfig().getVersion());
         if (version == null) {
             Analysis.getInstance().getLogger().error("Cannot find specified version {}", Analysis.getInstance().getConfig().getVersion());
@@ -102,22 +98,22 @@ public class MinecraftIntegration extends Integration {
             return false;
         }
         
-        Artifact artifact = versionManifest.getDownloads().get(type);
+        Artifact artifact = versionManifest.getDownloads().get(platform.toString());
         if (artifact == null) {
-            Analysis.getInstance().getLogger().error("Missing {} Artifact", type);
+            Analysis.getInstance().getLogger().error("Missing {} Artifact", platform);
             return false;
         }
         
-        Artifact mappingsArtifact = versionManifest.getDownloads().get(type + "_mappings");
+        Artifact mappingsArtifact = versionManifest.getDownloads().get(platform + "_mappings");
         if (mappingsArtifact == null) {
-            Analysis.getInstance().getLogger().error("Missing {} Mappings Artifact", type);
+            Analysis.getInstance().getLogger().error("Missing {} Mappings Artifact", platform);
             return false;
         }
         
         Path versionPath = Analysis.getInstance().getVersionPath();
-        Path jarPath = versionPath.resolve(type + ".jar");
-        Path mappingPath = versionPath.resolve(type + ".txt");
-        Path outputPath = versionPath.resolve(type + "-deobf.jar");
+        Path jarPath = versionPath.resolve(platform + ".jar");
+        Path mappingPath = versionPath.resolve(platform + ".txt");
+        Path outputPath = versionPath.resolve(platform + "-deobf.jar");
         
         if (!Analysis.getInstance().getConfig().isReconstruct()) {
             Analysis.getInstance().getConfig().setReconstruct(!Files.exists(outputPath));
@@ -132,7 +128,7 @@ public class MinecraftIntegration extends Integration {
         
         try {
             if (Files.exists(jarPath) && Files.size(jarPath) == artifact.getSize() && HashUtils.sha1(jarPath, artifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified {}", type);
+                Analysis.getInstance().getLogger().info("Verified {}", platform);
             } else {
                 Analysis.getInstance().getLogger().debug("Downloading {}", artifact.getUrl());
                 WebUtils.downloadFile(
@@ -141,7 +137,7 @@ public class MinecraftIntegration extends Integration {
                         artifact.getSize(),
                         artifact.getHash());
                 
-                Analysis.getInstance().getLogger().info("Downloaded {}", type);
+                Analysis.getInstance().getLogger().info("Downloaded {}", platform);
                 Analysis.getInstance().getConfig().setReconstruct(true);
             }
         } catch (Exception ex) {
@@ -151,7 +147,7 @@ public class MinecraftIntegration extends Integration {
         
         try {
             if (Files.exists(mappingPath) && Files.size(mappingPath) == mappingsArtifact.getSize() && HashUtils.sha1(mappingPath, mappingsArtifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified {} Mappings", type);
+                Analysis.getInstance().getLogger().info("Verified {} Mappings", platform);
             } else {
                 Analysis.getInstance().getLogger().debug("Downloading {}", mappingsArtifact.getUrl());
                 WebUtils.downloadFile(
@@ -160,7 +156,7 @@ public class MinecraftIntegration extends Integration {
                         mappingsArtifact.getSize(),
                         mappingsArtifact.getHash());
                 
-                Analysis.getInstance().getLogger().info("Downloaded {} Mappings", type);
+                Analysis.getInstance().getLogger().info("Downloaded {} Mappings", platform);
                 Analysis.getInstance().getConfig().setReconstruct(true);
             }
         } catch (Exception ex) {

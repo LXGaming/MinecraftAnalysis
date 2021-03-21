@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Alex Thomson
+ * Copyright 2021 Alex Thomson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.configuration;
+package io.github.lxgaming.analysis.common.entity;
 
-import io.github.lxgaming.analysis.common.entity.Platform;
-
-import java.util.Collection;
-
-public interface Config {
+public enum Platform {
     
-    boolean isDebug();
+    CLIENT("Client"),
+    SERVER("Server");
     
-    boolean isReconstruct();
+    private final String name;
     
-    void setReconstruct(boolean reconstruct);
+    Platform(String name) {
+        this.name = name;
+    }
     
-    int getThreads();
+    public String getName() {
+        return name;
+    }
     
-    void setThreads(int threads);
-    
-    Collection<String> getQueries();
-    
-    Platform getPlatform();
-    
-    String getVersion();
+    @Override
+    public String toString() {
+        return name().toLowerCase();
+    }
 }

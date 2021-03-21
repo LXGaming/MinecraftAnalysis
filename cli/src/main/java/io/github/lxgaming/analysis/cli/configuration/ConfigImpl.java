@@ -18,6 +18,7 @@ package io.github.lxgaming.analysis.cli.configuration;
 
 import com.beust.jcommander.Parameter;
 import io.github.lxgaming.analysis.common.configuration.Config;
+import io.github.lxgaming.analysis.common.entity.Platform;
 
 import java.util.List;
 
@@ -48,10 +49,10 @@ public class ConfigImpl implements Config {
     private List<String> queries = null;
     
     @Parameter(
-            names = {"-type", "--type"},
-            description = "Client or Server"
+            names = {"-platform", "--platform"},
+            description = "Minecraft platform (Client / Server)"
     )
-    private String type = "server";
+    private Platform platform = Platform.SERVER;
     
     @Parameter(
             names = {"-version", "--version"},
@@ -90,8 +91,8 @@ public class ConfigImpl implements Config {
     }
     
     @Override
-    public String getType() {
-        return type;
+    public Platform getPlatform() {
+        return platform;
     }
     
     @Override

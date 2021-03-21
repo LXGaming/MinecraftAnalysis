@@ -58,7 +58,7 @@ public class Analysis {
     }
     
     public void load() {
-        if (StringUtils.isBlank(getConfig().getVersion()) || StringUtils.isBlank(getConfig().getType())) {
+        if (getConfig().getPlatform() == null || StringUtils.isBlank(getConfig().getVersion())) {
             getLogger().error("Invalid arguments");
             return;
         }
@@ -130,7 +130,7 @@ public class Analysis {
     }
     
     public void write(String name, Object object) {
-        Path path = getAnalysisPath().resolve(String.format("%s-%s.json", getConfig().getType().toLowerCase(), name));
+        Path path = getAnalysisPath().resolve(String.format("%s-%s.json", getConfig().getPlatform(), name));
         
         try {
             Files.createDirectories(path.getParent());
