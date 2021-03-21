@@ -23,22 +23,40 @@ import java.util.List;
 
 public class ConfigImpl implements Config {
     
-    @Parameter(names = {"-debug", "--debug"}, description = "For debugging purposes")
+    @Parameter(
+            names = {"-debug", "--debug"},
+            description = "For debugging purposes"
+    )
     private boolean debug = false;
     
-    @Parameter(names = {"-reconstruct", "--reconstruct"}, description = "Force Reconstruct")
+    @Parameter(
+            names = {"-reconstruct", "--reconstruct"},
+            description = "Force Reconstruct"
+    )
     private boolean reconstruct = false;
     
-    @Parameter(names = {"-thread", "--thread", "-threads", "--threads"}, description = "Performs deobfuscation asynchronously across the specified number of threads")
+    @Parameter(
+            names = {"-thread", "--thread", "-threads", "--threads"},
+            description = "Performs deobfuscation asynchronously across the specified number of threads"
+    )
     private int threads = 0;
     
-    @Parameter(names = {"-query", "--query", "-queries", "--queries"}, description = "Queries to use during analysis")
+    @Parameter(
+            names = {"-query", "--query", "-queries", "--queries"},
+            description = "Queries to use during analysis"
+    )
     private List<String> queries = null;
     
-    @Parameter(names = {"-type", "--type"}, description = "Client or Server")
+    @Parameter(
+            names = {"-type", "--type"},
+            description = "Client or Server"
+    )
     private String type = "server";
     
-    @Parameter(names = {"-version", "--version"}, description = "Target Minecraft Version")
+    @Parameter(
+            names = {"-version", "--version"},
+            description = "Minecraft version"
+    )
     private String version = null;
     
     @Override
