@@ -36,7 +36,7 @@ public class BuildManifest {
     private Integer protocolVersion;
     
     @SerializedName(value = "packVersion", alternate = "pack_version")
-    private Integer packVersion;
+    private PackVersion packVersion;
     
     @SerializedName(value = "buildTime", alternate = "build_time")
     private String buildTime;
@@ -64,7 +64,7 @@ public class BuildManifest {
         return protocolVersion;
     }
     
-    public Integer getPackVersion() {
+    public PackVersion getPackVersion() {
         return packVersion;
     }
     

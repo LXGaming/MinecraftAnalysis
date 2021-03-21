@@ -109,7 +109,9 @@ public class Analysis {
         getLogger().info("- Build Time: {}", getManifest().getBuildTime());
         getLogger().info("- Stable: {}", getManifest().getStable());
         getLogger().info("- Versions:");
-        getLogger().info("-- Pack: {}", getManifest().getPackVersion());
+        getLogger().info("-- Pack:");
+        getLogger().info("--- Data: {}", getManifest().getPackVersion().getData());
+        getLogger().info("--- Resource: {}", getManifest().getPackVersion().getResource());
         getLogger().info("-- Protocol: {}", getManifest().getProtocolVersion());
         getLogger().info("-- World: {}", getManifest().getWorldVersion());
         write("version", manifest);
