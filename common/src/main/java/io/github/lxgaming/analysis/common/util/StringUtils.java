@@ -20,6 +20,14 @@ import java.util.Collection;
 
 public class StringUtils {
     
+    public static boolean containsIgnoreCase(String string, String searchString) {
+        return string.toLowerCase().contains(searchString.toLowerCase());
+    }
+    
+    public static boolean startsWithIgnoreCase(String string, String searchString) {
+        return string.toLowerCase().startsWith(searchString.toLowerCase());
+    }
+    
     public static boolean containsIgnoreCase(Collection<String> collection, String targetString) {
         if (collection == null || collection.isEmpty()) {
             return false;

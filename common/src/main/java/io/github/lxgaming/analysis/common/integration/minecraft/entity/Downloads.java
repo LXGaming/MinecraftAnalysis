@@ -14,33 +14,25 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
-public enum Platform {
+import com.google.gson.annotations.SerializedName;
+
+import java.util.Map;
+
+public class Downloads {
     
-    CLIENT("Client"),
-    SERVER("Server");
+    @SerializedName("artifact")
+    private Artifact artifact;
     
-    private final String name;
+    @SerializedName("classifiers")
+    private Map<String, Artifact> classifiers;
     
-    Platform(String name) {
-        this.name = name;
+    public Artifact getArtifact() {
+        return artifact;
     }
     
-    public boolean isClient() {
-        return this == CLIENT;
-    }
-    
-    public boolean isServer() {
-        return this == SERVER;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    @Override
-    public String toString() {
-        return name().toLowerCase();
+    public Map<String, Artifact> getClassifiers() {
+        return classifiers;
     }
 }

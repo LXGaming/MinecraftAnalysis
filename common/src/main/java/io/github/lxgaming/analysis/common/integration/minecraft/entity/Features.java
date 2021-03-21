@@ -14,33 +14,23 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
-public enum Platform {
+import com.google.gson.annotations.SerializedName;
+
+public class Features {
     
-    CLIENT("Client"),
-    SERVER("Server");
+    @SerializedName("has_custom_resolution")
+    private boolean customResolution;
     
-    private final String name;
+    @SerializedName("is_demo_user")
+    private boolean demoUser;
     
-    Platform(String name) {
-        this.name = name;
+    public boolean isDemoUser() {
+        return demoUser;
     }
     
-    public boolean isClient() {
-        return this == CLIENT;
-    }
-    
-    public boolean isServer() {
-        return this == SERVER;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    @Override
-    public String toString() {
-        return name().toLowerCase();
+    public boolean isCustomResolution() {
+        return customResolution;
     }
 }

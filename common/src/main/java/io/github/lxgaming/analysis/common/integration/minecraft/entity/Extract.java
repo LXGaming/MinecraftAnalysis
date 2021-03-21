@@ -14,33 +14,18 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
-public enum Platform {
+import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
+
+public class Extract {
     
-    CLIENT("Client"),
-    SERVER("Server");
+    @SerializedName("exclude")
+    private List<String> exclude;
     
-    private final String name;
-    
-    Platform(String name) {
-        this.name = name;
-    }
-    
-    public boolean isClient() {
-        return this == CLIENT;
-    }
-    
-    public boolean isServer() {
-        return this == SERVER;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    @Override
-    public String toString() {
-        return name().toLowerCase();
+    public List<String> getExclude() {
+        return exclude;
     }
 }

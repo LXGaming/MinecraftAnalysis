@@ -20,7 +20,10 @@ import io.github.lxgaming.analysis.common.Analysis;
 import io.github.lxgaming.analysis.common.entity.BuildManifest;
 import io.github.lxgaming.analysis.common.entity.Platform;
 import io.github.lxgaming.analysis.common.integration.Integration;
+import io.github.lxgaming.analysis.common.integration.minecraft.entity.Action;
 import io.github.lxgaming.analysis.common.integration.minecraft.entity.Artifact;
+import io.github.lxgaming.analysis.common.integration.minecraft.entity.Library;
+import io.github.lxgaming.analysis.common.integration.minecraft.entity.Rule;
 import io.github.lxgaming.analysis.common.integration.minecraft.entity.Version;
 import io.github.lxgaming.analysis.common.integration.minecraft.entity.VersionList;
 import io.github.lxgaming.analysis.common.integration.minecraft.entity.VersionManifest;
@@ -36,6 +39,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 
 public class MinecraftIntegration extends Integration {
     
@@ -126,45 +130,72 @@ public class MinecraftIntegration extends Integration {
             integration.getConfig().setOutputPath(outputPath);
         }
         
-        try {
-            if (Files.exists(jarPath) && Files.size(jarPath) == artifact.getSize() && HashUtils.sha1(jarPath, artifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified {}", platform);
-            } else {
-                Analysis.getInstance().getLogger().debug("Downloading {}", artifact.getUrl());
-                WebUtils.downloadFile(
-                        new URL(artifact.getUrl()),
-                        jarPath,
-                        artifact.getSize(),
-                        artifact.getHash());
-                
-                Analysis.getInstance().getLogger().info("Downloaded {}", platform);
-                Analysis.getInstance().getConfig().setReconstruct(true);
-            }
-        } catch (Exception ex) {
-            Analysis.getInstance().getLogger().error("Encountered an error while downloading {}", artifact.getUrl(), ex);
-            return false;
+        if (platform.isClient()) {
+            installLibraries(versionManifest.getLibraries());
         }
         
-        try {
-            if (Files.exists(mappingPath) && Files.size(mappingPath) == mappingsArtifact.getSize() && HashUtils.sha1(mappingPath, mappingsArtifact.getHash())) {
-                Analysis.getInstance().getLogger().info("Verified {} Mappings", platform);
-            } else {
-                Analysis.getInstance().getLogger().debug("Downloading {}", mappingsArtifact.getUrl());
-                WebUtils.downloadFile(
-                        new URL(mappingsArtifact.getUrl()),
-                        mappingPath,
-                        mappingsArtifact.getSize(),
-                        mappingsArtifact.getHash());
-                
-                Analysis.getInstance().getLogger().info("Downloaded {} Mappings", platform);
-                Analysis.getInstance().getConfig().setReconstruct(true);
+        return downloadArtifact(artifact, jarPath) && downloadArtifact(mappingsArtifact, mappingPath);
+    }
+    
+    private void installLibraries(Collection<Library> libraries) {
+        for (Library library : libraries) {
+            if (!checkRules(library.getRules())) {
+                continue;
             }
+            
+            Artifact libraryArtifact = library.getDownloads().getArtifact();
+            if (libraryArtifact != null) {
+                Path path = Analysis.getInstance().getLibrariesPath().resolve(libraryArtifact.getPath());
+                if (downloadArtifact(libraryArtifact, path)) {
+                    Analysis.getInstance().getClassLoader().addPath(path);
+                }
+            }
+            
+            Artifact nativeArtifact = library.getNative();
+            if (nativeArtifact != null) {
+                Path path = Analysis.getInstance().getLibrariesPath().resolve(nativeArtifact.getPath());
+                if (downloadArtifact(nativeArtifact, path)) {
+                    Analysis.getInstance().getClassLoader().addPath(path);
+                }
+            }
+        }
+    }
+    
+    private boolean downloadArtifact(Artifact artifact, Path path) {
+        try {
+            if (Files.exists(path) && Files.size(path) == artifact.getSize() && HashUtils.sha1(path, artifact.getHash())) {
+                Analysis.getInstance().getLogger().info("Verified {}", path.getFileName());
+                return true;
+            }
+            
+            Analysis.getInstance().getLogger().info("Downloading {} ({})", path.getFileName(), artifact.getUrl());
+            WebUtils.downloadFile(
+                    new URL(artifact.getUrl()),
+                    path,
+                    artifact.getSize(),
+                    artifact.getHash());
+            
+            Analysis.getInstance().getLogger().info("Downloaded {}", path.getFileName());
+            return true;
         } catch (Exception ex) {
-            Analysis.getInstance().getLogger().error("Encountered an error while downloading {}", mappingsArtifact.getUrl(), ex);
+            Analysis.getInstance().getLogger().error("Encountered an error while downloading {} ({})", path.getFileName(), artifact.getUrl(), ex);
             return false;
         }
+    }
+    
+    private boolean checkRules(Collection<Rule> rules) {
+        if (rules == null || rules.isEmpty()) {
+            return true;
+        }
         
-        return true;
+        Action action = Action.DISALLOW;
+        for (Rule rule : rules) {
+            if (rule.getOperatingSystem() != null && rule.getOperatingSystem().isSupported()) {
+                action = rule.getAction();
+            }
+        }
+        
+        return action == Action.ALLOW;
     }
     
     public Version getVersion() {

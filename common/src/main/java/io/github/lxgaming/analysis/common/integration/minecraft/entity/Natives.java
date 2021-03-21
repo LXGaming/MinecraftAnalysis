@@ -14,33 +14,30 @@
  * limitations under the License.
  */
 
-package io.github.lxgaming.analysis.common.entity;
+package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
-public enum Platform {
+import com.google.gson.annotations.SerializedName;
+
+public class Natives {
     
-    CLIENT("Client"),
-    SERVER("Server");
+    @SerializedName("linux")
+    private String linux;
     
-    private final String name;
+    @SerializedName("osx")
+    private String osx;
     
-    Platform(String name) {
-        this.name = name;
+    @SerializedName("windows")
+    private String windows;
+    
+    public String getLinux() {
+        return linux;
     }
     
-    public boolean isClient() {
-        return this == CLIENT;
+    public String getOsx() {
+        return osx;
     }
     
-    public boolean isServer() {
-        return this == SERVER;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    @Override
-    public String toString() {
-        return name().toLowerCase();
+    public String getWindows() {
+        return windows;
     }
 }

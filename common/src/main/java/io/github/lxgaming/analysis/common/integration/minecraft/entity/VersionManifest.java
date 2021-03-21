@@ -16,10 +16,10 @@
 
 package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
 import java.util.Map;
 
 public class VersionManifest {
@@ -43,9 +43,8 @@ public class VersionManifest {
     @SerializedName("id")
     private String id;
     
-    // TODO Implement?
     @SerializedName("libraries")
-    private JsonArray libraries;
+    private List<Library> libraries;
     
     // TODO Implement?
     @SerializedName("logging")
@@ -90,7 +89,7 @@ public class VersionManifest {
         return id;
     }
     
-    public JsonArray getLibraries() {
+    public List<Library> getLibraries() {
         return libraries;
     }
     

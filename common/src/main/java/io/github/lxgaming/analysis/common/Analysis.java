@@ -49,6 +49,7 @@ public class Analysis {
     private final Config config;
     private final AnalysisClassLoader classLoader;
     private Path analysisPath;
+    private Path librariesPath;
     private Path versionPath;
     private BuildManifest manifest;
     
@@ -65,10 +66,13 @@ public class Analysis {
             return;
         }
         
-        this.analysisPath = Toolbox.getPath()
+        Path path = Toolbox.getPath();
+        this.analysisPath = path
                 .resolve("analysis")
                 .resolve(getConfig().getVersion());
-        this.versionPath = Toolbox.getPath()
+        this.librariesPath = path
+                .resolve("libraries");
+        this.versionPath = path
                 .resolve("versions")
                 .resolve(getConfig().getVersion());
         
@@ -162,6 +166,10 @@ public class Analysis {
     
     public Path getAnalysisPath() {
         return analysisPath;
+    }
+    
+    public Path getLibrariesPath() {
+        return librariesPath;
     }
     
     public Path getVersionPath() {
