@@ -16,6 +16,7 @@
 
 package io.github.lxgaming.analysis.common.query;
 
+import io.github.lxgaming.analysis.common.Analysis;
 import io.github.lxgaming.analysis.common.manager.QueryManager;
 
 import java.util.LinkedHashSet;
@@ -28,6 +29,10 @@ public abstract class Query {
     public abstract boolean prepare();
     
     public abstract void execute() throws Exception;
+    
+    protected final Class<?> loadClass(String name) throws ClassNotFoundException {
+        return Analysis.getInstance().getClassLoader().loadClass(name);
+    }
     
     protected final void addAlias(String alias) {
         QueryManager.registerAlias(this, alias);

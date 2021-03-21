@@ -37,14 +37,14 @@ public class PropertiesQuery extends Query {
     
     @Override
     public void execute() throws Exception {
-        Class<?> dedicatedServerPropertiesClass = Class.forName("net.minecraft.server.dedicated.DedicatedServerProperties");
+        Class<?> dedicatedServerPropertiesClass = loadClass("net.minecraft.server.dedicated.DedicatedServerProperties");
         Constructor<?> dedicatedServerPropertiesConstructor = dedicatedServerPropertiesClass.getConstructors()[0];
         
         Properties properties = new PropertiesImpl();
         if (dedicatedServerPropertiesConstructor.getParameterCount() == 1) {
             dedicatedServerPropertiesConstructor.newInstance(properties);
         } else if (dedicatedServerPropertiesConstructor.getParameterCount() == 2) {
-            Class<?> registryAccessClass = Class.forName("net.minecraft.core.RegistryAccess");
+            Class<?> registryAccessClass = loadClass("net.minecraft.core.RegistryAccess");
             
             // net.minecraft.core.RegistryAccess.builtin()
             Method method = registryAccessClass.getMethod("builtin");

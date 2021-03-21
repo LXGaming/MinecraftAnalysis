@@ -22,9 +22,9 @@ import io.github.lxgaming.analysis.common.integration.minecraft.MinecraftIntegra
 import io.github.lxgaming.analysis.common.integration.reconstruct.ReconstructIntegration;
 import io.github.lxgaming.analysis.common.manager.IntegrationManager;
 import io.github.lxgaming.analysis.common.manager.QueryManager;
+import io.github.lxgaming.analysis.common.util.AnalysisClassLoader;
 import io.github.lxgaming.analysis.common.util.StringUtils;
 import io.github.lxgaming.analysis.common.util.Toolbox;
-import io.github.lxgaming.classloader.ClassLoaderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +47,7 @@ public class Analysis {
     private static Analysis instance;
     private final Logger logger;
     private final Config config;
+    private final AnalysisClassLoader classLoader;
     private Path analysisPath;
     private Path versionPath;
     private BuildManifest manifest;
@@ -55,6 +56,7 @@ public class Analysis {
         instance = this;
         this.logger = LoggerFactory.getLogger(Analysis.NAME);
         this.config = config;
+        this.classLoader = new AnalysisClassLoader();
     }
     
     public void load() {
@@ -93,12 +95,7 @@ public class Analysis {
             getLogger().info("Skipping Reconstruct");
         }
         
-        try {
-            ClassLoaderUtils.appendToClassPath(reconstructIntegration.getConfig().getOutputPath().toUri().toURL());
-        } catch (Throwable ex) {
-            getLogger().error("Encountered an error while attempting to append to the class path", ex);
-            return;
-        }
+        classLoader.addPath(reconstructIntegration.getConfig().getOutputPath());
         
         this.manifest = minecraftIntegration.deserializeBuildManifest();
         if (manifest == null) {
@@ -117,7 +114,7 @@ public class Analysis {
         write("version", manifest);
         
         try {
-            Class<?> bootstrapClass = Class.forName("net.minecraft.server.Bootstrap");
+            Class<?> bootstrapClass = classLoader.loadClass("net.minecraft.server.Bootstrap");
             Method method = bootstrapClass.getMethod("bootStrap");
             method.invoke(null);
         } catch (Throwable ex) {
@@ -157,6 +154,10 @@ public class Analysis {
     
     public Config getConfig() {
         return config;
+    }
+    
+    public AnalysisClassLoader getClassLoader() {
+        return classLoader;
     }
     
     public Path getAnalysisPath() {

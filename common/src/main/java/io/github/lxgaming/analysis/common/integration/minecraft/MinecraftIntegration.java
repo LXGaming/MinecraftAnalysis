@@ -74,7 +74,7 @@ public class MinecraftIntegration extends Integration {
     }
     
     public BuildManifest deserializeBuildManifest() {
-        try (InputStream inputStream = getClass().getResourceAsStream("/version.json")) {
+        try (InputStream inputStream = Analysis.getInstance().getClassLoader().getResourceAsStream("version.json")) {
             if (inputStream == null) {
                 Analysis.getInstance().getLogger().error("version.json does not exist");
                 return null;

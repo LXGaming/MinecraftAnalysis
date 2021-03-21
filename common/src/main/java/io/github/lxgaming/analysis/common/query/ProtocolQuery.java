@@ -46,7 +46,7 @@ public class ProtocolQuery extends Query {
     // 1.15+
     @SuppressWarnings("unchecked")
     private JsonArray processFlows() throws Exception {
-        Class<?> connectionProtocolClass = Class.forName("net.minecraft.network.ConnectionProtocol");
+        Class<?> connectionProtocolClass = loadClass("net.minecraft.network.ConnectionProtocol");
         
         // net.minecraft.network.ConnectionProtocol.LOOKUP
         Field lookupField = connectionProtocolClass.getDeclaredField("LOOKUP");
@@ -56,7 +56,7 @@ public class ProtocolQuery extends Query {
         Field flowsField = connectionProtocolClass.getDeclaredField("flows");
         flowsField.setAccessible(true);
         
-        Class<?> packetSetClass = Class.forName("net.minecraft.network.ConnectionProtocol$PacketSet");
+        Class<?> packetSetClass = loadClass("net.minecraft.network.ConnectionProtocol$PacketSet");
         
         // net.minecraft.network.ConnectionProtocol.PacketSet.classToId
         Field classToIdField = packetSetClass.getDeclaredField("classToId");
@@ -88,7 +88,7 @@ public class ProtocolQuery extends Query {
     // 1.14.4
     @SuppressWarnings("unchecked")
     private JsonArray processPackets() throws Exception {
-        Class<?> connectionProtocolClass = Class.forName("net.minecraft.network.ConnectionProtocol");
+        Class<?> connectionProtocolClass = loadClass("net.minecraft.network.ConnectionProtocol");
         
         // net.minecraft.network.ConnectionProtocol.LOOKUP
         Field lookupField = connectionProtocolClass.getDeclaredField("LOOKUP");
