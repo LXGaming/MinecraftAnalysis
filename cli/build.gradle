@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id "com.github.johnrengelman.shadow"
 }
@@ -47,6 +49,30 @@ shadowJar {
     }
 }
 
+task runAnalysis() {
+    doFirst {
+        def manifest = new JsonSlurper().parse(new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json"))
+        for (def version : manifest["versions"]) {
+            // Versions after 1.14.4 which don't have mappings
+            if (version["id"] == "19w34a" || version["id"] == "19w35a") {
+                continue
+            }
+
+            if (project.hasProperty("analysis.type") && project.property("analysis.type") != version["type"]) {
+                continue
+            }
+
+            project.ext.setProperty("analysis.version", version["id"])
+            runCli()
+            project.ext.setProperty("analysis.version", "")
+
+            if (version["id"] == "1.14.4") {
+                return
+            }
+        }
+    }
+}
+
 task signJar {
     doFirst {
         if (!project.hasProperty("signing.keyStorePath") || !project.hasProperty("signing.secretKeyRingFile")) {
@@ -76,5 +102,31 @@ task signJar {
             signing.sign(it)
             project.logger.lifecycle("PGP Signed: " + it.name)
         }
+    }
+}
+
+def runCli() {
+    def launcher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }.get()
+
+    def workingDirectory = new File(rootDir, "run")
+    if (!workingDirectory.exists() && !workingDirectory.mkdir()) {
+        throw new StopExecutionException("Failed to create working directory")
+    }
+
+    project.javaexec {
+        executable(launcher.executablePath)
+        if (project.hasProperty("analysis.reconstruct")) {
+            args("--reconstruct")
+        }
+
+        args(
+                "--threads", project.hasProperty("analysis.threads") ? project.property("analysis.threads") : "0",
+                "--platform", project.hasProperty("analysis.platform") ? project.property("analysis.platform") : "server",
+                "--version", project.hasProperty("analysis.version") ? project.property("analysis.version") : ""
+        )
+        classpath(jar.archiveFile.get())
+        workingDir(workingDirectory)
     }
 }
