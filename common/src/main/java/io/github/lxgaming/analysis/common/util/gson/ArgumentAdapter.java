@@ -25,6 +25,7 @@ import io.github.lxgaming.analysis.common.integration.minecraft.entity.Rule;
 import io.github.lxgaming.analysis.common.util.Toolbox;
 
 import java.io.IOException;
+import java.util.Collections;
 
 public class ArgumentAdapter extends TypeAdapter<Argument> {
     
@@ -71,13 +72,15 @@ public class ArgumentAdapter extends TypeAdapter<Argument> {
             while (in.hasNext()) {
                 String name = in.nextName();
                 if (name.equals("rules")) {
-                    argument.getRules().addAll(Toolbox.GSON.fromJson(in, Rule[].class));
+                    Rule[] rules = Toolbox.GSON.fromJson(in, Rule[].class);
+                    Collections.addAll(argument.getRules(), rules);
                     continue;
                 }
                 
                 if (name.equals("value")) {
                     if (in.peek() == JsonToken.BEGIN_ARRAY) {
-                        argument.getValue().addAll(Toolbox.GSON.fromJson(in, String[].class));
+                        String[] value = Toolbox.GSON.fromJson(in, String[].class);
+                        Collections.addAll(argument.getValue(), value);
                         continue;
                     }
                     
