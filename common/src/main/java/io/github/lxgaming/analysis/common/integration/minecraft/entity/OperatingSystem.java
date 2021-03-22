@@ -17,7 +17,7 @@
 package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.lxgaming.analysis.common.util.StringUtils;
+import io.github.lxgaming.analysis.common.entity.OSPlatform;
 
 public class OperatingSystem {
     
@@ -52,20 +52,16 @@ public class OperatingSystem {
             return true;
         }
         
-        String name = System.getProperty("os.name");
-        if (StringUtils.containsIgnoreCase(name, "BSD") || StringUtils.containsIgnoreCase(name, "Linux") || StringUtils.containsIgnoreCase(name, "Unix")) {
+        OSPlatform platform = OSPlatform.getOSPlatform();
+        if (platform.isLinux()) {
             return getName().equals("linux");
-        }
-        
-        if (StringUtils.startsWithIgnoreCase(name, "Mac OS")) {
+        } else if (platform.isMacOS()) {
             return getName().equals("osx");
-        }
-        
-        if (StringUtils.startsWithIgnoreCase(name, "Windows")) {
+        } else if (platform.isWindows()) {
             return getName().equals("windows");
+        } else {
+            throw new IllegalStateException(String.format("%s is not supported", platform));
         }
-        
-        throw new IllegalStateException(String.format("%s is not supported", name));
     }
     
     public boolean isVersionSupported() {

@@ -17,7 +17,7 @@
 package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.lxgaming.analysis.common.util.StringUtils;
+import io.github.lxgaming.analysis.common.entity.OSPlatform;
 
 import java.util.List;
 
@@ -39,24 +39,20 @@ public class Library {
     public List<Rule> rules;
     
     public Artifact getNative() {
-        if (getNatives() == null) {
+        if (getDownloads().getClassifiers() == null || getNatives() == null) {
             return null;
         }
         
-        String name = System.getProperty("os.name");
-        if (StringUtils.containsIgnoreCase(name, "BSD") || StringUtils.containsIgnoreCase(name, "Linux") || StringUtils.containsIgnoreCase(name, "Unix")) {
+        OSPlatform platform = OSPlatform.getOSPlatform();
+        if (platform.isLinux()) {
             return getDownloads().getClassifiers().get(getNatives().getLinux());
-        }
-        
-        if (StringUtils.startsWithIgnoreCase(name, "Mac OS")) {
+        } else if (platform.isMacOS()) {
             return getDownloads().getClassifiers().get(getNatives().getOsx());
-        }
-        
-        if (StringUtils.startsWithIgnoreCase(name, "Windows")) {
+        } else if (platform.isWindows()) {
             return getDownloads().getClassifiers().get(getNatives().getWindows());
+        } else {
+            throw new IllegalStateException(String.format("%s is not supported", platform));
         }
-        
-        throw new IllegalStateException(String.format("%s is not supported", name));
     }
     
     public Downloads getDownloads() {
