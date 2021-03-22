@@ -18,9 +18,20 @@ package io.github.lxgaming.analysis.common.util;
 
 import com.google.gson.JsonNull;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class PropertiesImpl extends Properties {
+    
+    @Override
+    public synchronized Enumeration<Object> keys() {
+        return Collections.enumeration(new TreeSet<>(super.keySet()));
+    }
     
     @Override
     public synchronized Object get(Object key) {
@@ -30,5 +41,17 @@ public class PropertiesImpl extends Properties {
         }
         
         return object;
+    }
+    
+    @Override
+    public Set<Object> keySet() {
+        return new TreeSet<>(super.keySet());
+    }
+    
+    @Override
+    public Set<Map.Entry<Object, Object>> entrySet() {
+        Set<Map.Entry<Object, Object>> set = new TreeSet<>(Comparator.comparing(string -> string.getKey().toString()));
+        set.addAll(super.entrySet());
+        return set;
     }
 }
