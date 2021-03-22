@@ -9,6 +9,12 @@ subprojects {
 
     group = "io.github.lxgaming"
 
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+    }
+
     repositories {
         mavenCentral()
         maven {
