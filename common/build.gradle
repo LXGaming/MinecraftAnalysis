@@ -1,15 +1,12 @@
 plugins {
-    id "java"
     id "java-library"
     id "maven-publish"
     id "net.kyori.blossom"
-    id "signing"
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-group = "io.github.lxgaming"
 archivesBaseName = "minecraftanalysis-common"
 
 blossom {

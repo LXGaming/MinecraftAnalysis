@@ -4,6 +4,11 @@ plugins {
 }
 
 subprojects {
+    apply plugin: "java"
+    apply plugin: "signing"
+
+    group = "io.github.lxgaming"
+
     repositories {
         mavenCentral()
         maven {
