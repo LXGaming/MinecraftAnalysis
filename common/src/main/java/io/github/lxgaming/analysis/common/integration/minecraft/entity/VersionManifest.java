@@ -16,7 +16,6 @@
 
 package io.github.lxgaming.analysis.common.integration.minecraft.entity;
 
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
@@ -24,9 +23,8 @@ import java.util.Map;
 
 public class VersionManifest {
     
-    // TODO Implement?
     @SerializedName("arguments")
-    private JsonObject arguments;
+    private Map<String, List<Argument>> arguments;
     
     @SerializedName("assetIndex")
     private Artifact assetIndex;
@@ -43,12 +41,14 @@ public class VersionManifest {
     @SerializedName("id")
     private String id;
     
+    @SerializedName("javaVersion")
+    private JavaVersion javaVersion;
+    
     @SerializedName("libraries")
     private List<Library> libraries;
     
-    // TODO Implement?
     @SerializedName("logging")
-    private JsonObject logging;
+    private Map<String, Logging> logging;
     
     @SerializedName("mainClass")
     private String mainClass;
@@ -65,7 +65,7 @@ public class VersionManifest {
     @SerializedName("type")
     private String type;
     
-    public JsonObject getArguments() {
+    public Map<String, List<Argument>> getArguments() {
         return arguments;
     }
     
@@ -89,11 +89,15 @@ public class VersionManifest {
         return id;
     }
     
+    public JavaVersion getJavaVersion() {
+        return javaVersion;
+    }
+    
     public List<Library> getLibraries() {
         return libraries;
     }
     
-    public JsonObject getLogging() {
+    public Map<String, Logging> getLogging() {
         return logging;
     }
     
