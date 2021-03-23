@@ -1,6 +1,5 @@
 plugins {
     id "java-library"
-    id "maven-publish"
     id "net.kyori.blossom"
 }
 
@@ -25,55 +24,12 @@ dependencies {
     testCompile("org.junit.jupiter:junit-jupiter-engine:5.7.1")
 }
 
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
-
-javadoc {
-    failOnError = false
-}
-
 processResources {
     from("../LICENSE")
     rename("LICENSE", "LICENSE-MinecraftAnalysis")
 }
 
 publishing {
-    publications {
-        mavenPublication(MavenPublication) {
-            from components.java
-            groupId group
-            artifactId archivesBaseName
-            version version
-            pom {
-                name = "MinecraftAnalysis"
-                description = "Minecraft Analysis"
-                url = "https://github.com/LXGaming/MinecraftAnalysis"
-                developers {
-                    developer {
-                        id = "lxgaming"
-                        name = "LXGaming"
-                    }
-                }
-                issueManagement {
-                    system = "GitHub Issues"
-                    url = "https://github.com/LXGaming/MinecraftAnalysis/issues"
-                }
-                licenses {
-                    license {
-                        name = "The Apache License, Version 2.0"
-                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                    }
-                }
-                scm {
-                    connection = "scm:git@github.com:LXGaming/MinecraftAnalysis.git"
-                    developerConnection = "scm:git@github.com:LXGaming/MinecraftAnalysis.git"
-                    url = "https://github.com/LXGaming/MinecraftAnalysis"
-                }
-            }
-        }
-    }
     repositories {
         if (project.hasProperty("sonatype.username") && project.hasProperty("sonatype.password")) {
             maven {
@@ -86,10 +42,6 @@ publishing {
             }
         }
     }
-}
-
-signing {
-    sign publishing.publications
 }
 
 test {

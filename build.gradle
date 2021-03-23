@@ -6,15 +6,10 @@ plugins {
 
 subprojects {
     apply plugin: "java"
+    apply plugin: "maven-publish"
     apply plugin: "signing"
 
     group = "io.github.lxgaming"
-
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(8)
-        }
-    }
 
     repositories {
         mavenCentral()
@@ -25,6 +20,92 @@ subprojects {
         maven {
             name = "minecraftforge"
             url = "https://files.minecraftforge.net/maven"
+        }
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
+
+        withJavadocJar()
+        withSourcesJar()
+    }
+
+    javadoc {
+        failOnError = false
+    }
+
+    publishing {
+        publications {
+            mavenPublication(MavenPublication) {
+                from components.java
+                groupId group
+                artifactId archivesBaseName
+                version version
+                pom {
+                    name = "MinecraftAnalysis"
+                    description = "Minecraft Analysis"
+                    url = "https://github.com/LXGaming/MinecraftAnalysis"
+                    developers {
+                        developer {
+                            id = "lxgaming"
+                            name = "LXGaming"
+                        }
+                    }
+                    issueManagement {
+                        system = "GitHub Issues"
+                        url = "https://github.com/LXGaming/MinecraftAnalysis/issues"
+                    }
+                    licenses {
+                        license {
+                            name = "The Apache License, Version 2.0"
+                            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        }
+                    }
+                    scm {
+                        connection = "scm:git@github.com:LXGaming/MinecraftAnalysis.git"
+                        developerConnection = "scm:git@github.com:LXGaming/MinecraftAnalysis.git"
+                        url = "https://github.com/LXGaming/MinecraftAnalysis"
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        sign publishing.publications
+    }
+
+    task signJar {
+        doFirst {
+            if (!project.hasProperty("signing.keyStorePath") || !project.hasProperty("signing.secretKeyRingFile")) {
+                project.logger.warn("========== [WARNING] ==========")
+                project.logger.warn("")
+                project.logger.warn("   This build is not signed!   ")
+                project.logger.warn("")
+                project.logger.warn("========== [WARNING] ==========")
+                throw new StopExecutionException()
+            }
+        }
+
+        doLast {
+            configurations.archives.allArtifacts.files.each {
+                ant.signjar(
+                        jar: it,
+                        alias: project.property("signing.alias"),
+                        storepass: project.property("signing.keyStorePassword"),
+                        keystore: project.property("signing.keyStorePath"),
+                        keypass: project.property("signing.keyStorePassword"),
+                        preservelastmodified: project.property("signing.preserveLastModified"),
+                        tsaurl: project.property("signing.timestampAuthority"),
+                        digestalg: project.property("signing.digestAlgorithm")
+                )
+                project.logger.lifecycle("JAR Signed: " + it.name)
+
+                signing.sign(it)
+                project.logger.lifecycle("PGP Signed: " + it.name)
+            }
         }
     }
 }
