@@ -36,9 +36,12 @@ import io.github.lxgaming.analysis.common.util.WebUtils;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 
 public class MinecraftIntegration extends Integration {
@@ -48,16 +51,8 @@ public class MinecraftIntegration extends Integration {
     
     @Override
     public boolean prepare() {
-        VersionList versionList;
-        try {
-            versionList = WebUtils.deserializeJson(new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json"), VersionList.class);
-        } catch (Exception ex) {
-            Analysis.getInstance().getLogger().error("Encountered an error while getting VersionList", ex);
-            return false;
-        }
-        
         this.platform = Analysis.getInstance().getConfig().getPlatform();
-        this.version = versionList.getVersion(Analysis.getInstance().getConfig().getVersion());
+        this.version = findVersion();
         if (version == null) {
             Analysis.getInstance().getLogger().error("Cannot find specified version {}", Analysis.getInstance().getConfig().getVersion());
             return false;
@@ -94,11 +89,13 @@ public class MinecraftIntegration extends Integration {
     }
     
     public boolean downloadMinecraft() {
-        VersionManifest versionManifest;
-        try {
-            versionManifest = WebUtils.deserializeJson(new URL(version.getUrl()), VersionManifest.class);
-        } catch (Exception ex) {
-            Analysis.getInstance().getLogger().error("Encountered an error while getting VersionManifest", ex);
+        Path path = Analysis.getInstance().getVersionPath().resolve(Analysis.getInstance().getConfig().getVersion() + ".json");
+        if (!Files.exists(path) && !downloadFile(version.getUrl(), path)) {
+            return false;
+        }
+        
+        VersionManifest versionManifest = deserialize(path, VersionManifest.class);
+        if (versionManifest == null) {
             return false;
         }
         
@@ -168,15 +165,7 @@ public class MinecraftIntegration extends Integration {
                 return true;
             }
             
-            Analysis.getInstance().getLogger().info("Downloading {} ({})", path.getFileName(), artifact.getUrl());
-            WebUtils.downloadFile(
-                    new URL(artifact.getUrl()),
-                    path,
-                    artifact.getSize(),
-                    artifact.getHash());
-            
-            Analysis.getInstance().getLogger().info("Downloaded {}", path.getFileName());
-            return true;
+            return downloadFile(artifact.getUrl(), path, artifact.getSize(), artifact.getHash());
         } catch (Exception ex) {
             Analysis.getInstance().getLogger().error("Encountered an error while downloading {} ({})", path.getFileName(), artifact.getUrl(), ex);
             return false;
@@ -196,6 +185,56 @@ public class MinecraftIntegration extends Integration {
         }
         
         return action == Action.ALLOW;
+    }
+    
+    private Version findVersion() {
+        Path path = Paths.get("version_manifest.json");
+        if (Files.exists(path)) {
+            Version version = findVersion(path);
+            if (version != null) {
+                return version;
+            }
+        }
+        
+        if (downloadFile("https://launchermeta.mojang.com/mc/game/version_manifest.json", path)) {
+            return findVersion(path);
+        }
+        
+        return null;
+    }
+    
+    private Version findVersion(Path path) {
+        VersionList versionList = deserialize(path, VersionList.class);
+        if (versionList == null) {
+            return null;
+        }
+        
+        return versionList.getVersion(Analysis.getInstance().getConfig().getVersion());
+    }
+    
+    private boolean downloadFile(String url, Path path) {
+        return downloadFile(url, path, -1, null);
+    }
+    
+    private boolean downloadFile(String url, Path path, long length, String hash) {
+        try {
+            Analysis.getInstance().getLogger().debug("Downloading {} ({})", path.getFileName(), url);
+            WebUtils.downloadFile(new URL(url), path, length, hash);
+            Analysis.getInstance().getLogger().info("Downloaded {}", path.getFileName());
+            return true;
+        } catch (Exception ex) {
+            Analysis.getInstance().getLogger().error("Encountered an error while downloading {} ({})", path.getFileName(), url, ex);
+            return false;
+        }
+    }
+    
+    private <T> T deserialize(Path path, Class<T> type) {
+        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            return Toolbox.GSON.fromJson(reader, type);
+        } catch (Exception ex) {
+            Analysis.getInstance().getLogger().error("Encountered an error while reading {}", path.getFileName(), ex);
+            return null;
+        }
     }
     
     public Version getVersion() {
