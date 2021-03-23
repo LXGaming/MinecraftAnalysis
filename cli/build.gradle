@@ -39,15 +39,6 @@ jar {
 shadowJar {
     archiveClassifier.set(null)
     configurations = [project.configurations.shadow]
-
-    exclude {
-        // Exclude the Log4j2Plugins.dat file so logging works. Log4j2PluginsCacheFileTransformer doesn't work.
-        if (it.path == "META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat") {
-            return true
-        }
-
-        return false
-    }
 }
 
 task downloadManifest(type: Download) {
