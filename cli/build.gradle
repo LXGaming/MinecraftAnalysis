@@ -42,11 +42,13 @@ shadowJar {
 }
 
 task downloadManifest(type: Download) {
-    src("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-    dest(getVersionManifest())
-    quiet(false)
-    overwrite(true)
-    onlyIfModified(true)
+    doFirst {
+        src("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+        dest(getVersionManifest())
+        quiet(false)
+        overwrite(true)
+        onlyIfModified(true)
+    }
 }
 
 task runAnalysis(dependsOn: [build, downloadManifest]) {
