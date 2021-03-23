@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import io.github.lxgaming.analysis.common.Analysis;
 
 import java.lang.reflect.Field;
+import java.util.Comparator;
 import java.util.Map;
 
 public class ProtocolQuery extends Query {
@@ -48,9 +49,17 @@ public class ProtocolQuery extends Query {
     private JsonArray processFlows() throws Exception {
         Class<?> connectionProtocolClass = loadClass("net.minecraft.network.ConnectionProtocol");
         
-        // net.minecraft.network.ConnectionProtocol.LOOKUP
-        Field lookupField = connectionProtocolClass.getDeclaredField("LOOKUP");
-        lookupField.setAccessible(true);
+        // net.minecraft.network.ConnectionProtocol.HANDSHAKING
+        Field handshakeField = connectionProtocolClass.getDeclaredField("HANDSHAKING");
+        
+        // net.minecraft.network.ConnectionProtocol.STATUS
+        Field statusField = connectionProtocolClass.getDeclaredField("STATUS");
+        
+        // net.minecraft.network.ConnectionProtocol.LOGIN
+        Field loginField = connectionProtocolClass.getDeclaredField("LOGIN");
+        
+        // net.minecraft.network.ConnectionProtocol.PLAY
+        Field playField = connectionProtocolClass.getDeclaredField("PLAY");
         
         // net.minecraft.network.ConnectionProtocol.flows
         Field flowsField = connectionProtocolClass.getDeclaredField("flows");
@@ -62,23 +71,26 @@ public class ProtocolQuery extends Query {
         Field classToIdField = packetSetClass.getDeclaredField("classToId");
         classToIdField.setAccessible(true);
         
-        JsonArray jsonArray = new JsonArray();
+        Object handshakeProtocol = handshakeField.get(null);
+        Object statusProtocol = statusField.get(null);
+        Object loginProtocol = loginField.get(null);
+        Object playProtocol = playField.get(null);
         
-        Object[] connectionProtocols = (Object[]) lookupField.get(null);
-        for (Object connectionProtocol : connectionProtocols) {
+        JsonArray jsonArray = new JsonArray();
+        for (Object connectionProtocol : new Object[]{handshakeProtocol, statusProtocol, loginProtocol, playProtocol}) {
             
             Map<Object, Object> flows = (Map<Object, Object>) flowsField.get(connectionProtocol);
             for (Map.Entry<Object, Object> flowEntry : flows.entrySet()) {
                 
                 Map<Class<?>, Integer> classToId = (Map<Class<?>, Integer>) classToIdField.get(flowEntry.getValue());
-                for (Map.Entry<Class<?>, Integer> classEntry : classToId.entrySet()) {
+                classToId.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getValue)).forEach(entry -> {
                     JsonObject jsonObject = new JsonObject();
-                    jsonObject.addProperty("id", classEntry.getValue());
-                    jsonObject.addProperty("name", classEntry.getKey().getName());
+                    jsonObject.addProperty("id", entry.getValue());
+                    jsonObject.addProperty("name", entry.getKey().getName());
                     jsonObject.addProperty("direction", flowEntry.getKey().toString());
                     jsonObject.addProperty("state", connectionProtocol.toString());
                     jsonArray.add(jsonObject);
-                }
+                });
             }
         }
         
@@ -90,18 +102,29 @@ public class ProtocolQuery extends Query {
     private JsonArray processPackets() throws Exception {
         Class<?> connectionProtocolClass = loadClass("net.minecraft.network.ConnectionProtocol");
         
-        // net.minecraft.network.ConnectionProtocol.LOOKUP
-        Field lookupField = connectionProtocolClass.getDeclaredField("LOOKUP");
-        lookupField.setAccessible(true);
+        // net.minecraft.network.ConnectionProtocol.HANDSHAKING
+        Field handshakeField = connectionProtocolClass.getDeclaredField("HANDSHAKING");
+        
+        // net.minecraft.network.ConnectionProtocol.STATUS
+        Field statusField = connectionProtocolClass.getDeclaredField("STATUS");
+        
+        // net.minecraft.network.ConnectionProtocol.LOGIN
+        Field loginField = connectionProtocolClass.getDeclaredField("LOGIN");
+        
+        // net.minecraft.network.ConnectionProtocol.PLAY
+        Field playField = connectionProtocolClass.getDeclaredField("PLAY");
         
         // net.minecraft.network.ConnectionProtocol.flows
         Field packetsField = connectionProtocolClass.getDeclaredField("packets");
         packetsField.setAccessible(true);
         
-        JsonArray jsonArray = new JsonArray();
+        Object handshakeProtocol = handshakeField.get(null);
+        Object statusProtocol = statusField.get(null);
+        Object loginProtocol = loginField.get(null);
+        Object playProtocol = playField.get(null);
         
-        Object[] connectionProtocols = (Object[]) lookupField.get(null);
-        for (Object connectionProtocol : connectionProtocols) {
+        JsonArray jsonArray = new JsonArray();
+        for (Object connectionProtocol : new Object[]{handshakeProtocol, statusProtocol, loginProtocol, playProtocol}) {
             
             Map<Object, Map<Integer, Class<?>>> packets = (Map<Object, Map<Integer, Class<?>>>) packetsField.get(connectionProtocol);
             for (Map.Entry<Object, Map<Integer, Class<?>>> packetEntry : packets.entrySet()) {
