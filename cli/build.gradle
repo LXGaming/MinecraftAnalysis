@@ -7,6 +7,9 @@ plugins {
 
 archivesBaseName = "minecraftanalysis-cli"
 
+def workingDirectory = new File(rootDir, "run")
+def versionManifest = new File(workingDirectory, "version_manifest.json")
+
 configurations {
     shadow {
         runtime.extendsFrom(shadow)
@@ -41,19 +44,25 @@ shadowJar {
     configurations = [project.configurations.shadow]
 }
 
-task downloadManifest(type: Download) {
+task createWorkingDirectory {
     doFirst {
-        src("https://launchermeta.mojang.com/mc/game/version_manifest.json")
-        dest(getVersionManifest())
-        quiet(false)
-        overwrite(true)
-        onlyIfModified(true)
+        if (!workingDirectory.exists() && !workingDirectory.mkdir()) {
+            throw new StopExecutionException("Failed to create working directory")
+        }
     }
 }
 
-task runAnalysis(dependsOn: [build, downloadManifest]) {
+task downloadManifest(dependsOn: createWorkingDirectory, type: Download) {
+    src("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+    dest(versionManifest)
+    quiet(false)
+    overwrite(true)
+    onlyIfModified(true)
+}
+
+task runAnalysis(dependsOn: [build, createWorkingDirectory, downloadManifest]) {
     doFirst {
-        def manifest = new JsonSlurper().parse(getVersionManifest())
+        def manifest = new JsonSlurper().parse(versionManifest)
         for (def version : manifest["versions"]) {
             // Versions after 1.14.4 which don't have mappings
             if (version["id"] == "19w34a" || version["id"] == "19w35a") {
@@ -65,7 +74,7 @@ task runAnalysis(dependsOn: [build, downloadManifest]) {
             }
 
             project.ext.setProperty("analysis.version", version["id"])
-            runCli()
+            runCli(workingDirectory)
             project.ext.setProperty("analysis.version", "")
 
             if (version["id"] == "1.14.4") {
@@ -75,7 +84,7 @@ task runAnalysis(dependsOn: [build, downloadManifest]) {
     }
 }
 
-void runCli() {
+void runCli(File workingDirectory) {
     def launcher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(8)
     }.get()
@@ -92,19 +101,6 @@ void runCli() {
                 "--version", project.hasProperty("analysis.version") ? project.property("analysis.version") : ""
         )
         classpath(jar.archiveFile.get())
-        workingDir(getWorkingDirectory())
+        workingDir(workingDirectory)
     }
-}
-
-File getVersionManifest() {
-    return new File(getWorkingDirectory(), "version_manifest.json")
-}
-
-File getWorkingDirectory() {
-    def workingDirectory = new File(rootDir, "run")
-    if (!workingDirectory.exists() && !workingDirectory.mkdir()) {
-        throw new StopExecutionException("Failed to create working directory")
-    }
-
-    return workingDirectory
 }
