@@ -2,6 +2,7 @@ import groovy.json.JsonSlurper
 
 plugins {
     id "com.github.johnrengelman.shadow"
+    id "de.undercouch.download"
 }
 
 archivesBaseName = "minecraftanalysis-cli"
@@ -49,9 +50,17 @@ shadowJar {
     }
 }
 
-task runAnalysis() {
+task downloadManifest(type: Download) {
+    src("https://launchermeta.mojang.com/mc/game/version_manifest.json")
+    dest(getVersionManifest())
+    quiet(false)
+    overwrite(true)
+    onlyIfModified(true)
+}
+
+task runAnalysis(dependsOn: [build, downloadManifest]) {
     doFirst {
-        def manifest = new JsonSlurper().parse(new URL("https://launchermeta.mojang.com/mc/game/version_manifest.json"))
+        def manifest = new JsonSlurper().parse(getVersionManifest())
         for (def version : manifest["versions"]) {
             // Versions after 1.14.4 which don't have mappings
             if (version["id"] == "19w34a" || version["id"] == "19w35a") {
@@ -105,15 +114,10 @@ task signJar {
     }
 }
 
-def runCli() {
+void runCli() {
     def launcher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(8)
     }.get()
-
-    def workingDirectory = new File(rootDir, "run")
-    if (!workingDirectory.exists() && !workingDirectory.mkdir()) {
-        throw new StopExecutionException("Failed to create working directory")
-    }
 
     project.javaexec {
         executable(launcher.executablePath)
@@ -127,6 +131,19 @@ def runCli() {
                 "--version", project.hasProperty("analysis.version") ? project.property("analysis.version") : ""
         )
         classpath(jar.archiveFile.get())
-        workingDir(workingDirectory)
+        workingDir(getWorkingDirectory())
     }
+}
+
+File getVersionManifest() {
+    return new File(getWorkingDirectory(), "version_manifest.json")
+}
+
+File getWorkingDirectory() {
+    def workingDirectory = new File(rootDir, "run")
+    if (!workingDirectory.exists() && !workingDirectory.mkdir()) {
+        throw new StopExecutionException("Failed to create working directory")
+    }
+
+    return workingDirectory
 }
